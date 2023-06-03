@@ -1,8 +1,6 @@
 from typing import *
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 import matplotlib as mpl
-import numpy as np
-
 
 class GnuplotCanvas(FigureCanvas):
     def __init__(self, MainWindow, x_len:int, y_range:List) -> None:
