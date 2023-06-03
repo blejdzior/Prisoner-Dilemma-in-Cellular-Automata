@@ -1,4 +1,3 @@
-import asyncio
 import time
 from PySide6.QtCore import QRunnable
 
@@ -24,6 +23,7 @@ class Animation(QRunnable):
                 time.sleep(0.1)
                 continue
             self.mainWindow.start_animation()
+            self.mainWindow.update_graph(self.iter)
             self.iter += 1
             time.sleep(self.sleepTime)
          self.mainWindow.enableStartButton()
