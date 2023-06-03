@@ -41,10 +41,17 @@ class Statistics:
         self.f_7DC = round(f_7DC, 4)
         self.f_8DC = round(f_8DC, 4)
 
-
-
-
-
+    def get_iter(self):
+        return self.iter
+    
+    def get_f_C(self):
+        return self.f_C
+    
+    def get_f_C_corr(self):
+        return self.f_C_corr
+    
+    def get_f_strat_ch(self):
+        return self.f_strat_ch
 
     def write_stats_to_file(self, f):
         f.write(str(self.iter) + "             " + str(self.f_C) + "        " + str(self.f_C_corr)  + "          "  + str(self.av_sum))
@@ -57,4 +64,3 @@ class Statistics:
         f.write("      " + str(self.f_8C)  + "      " + str(self.f_0DC)  + "      " + str(self.f_1DC)  + "      "  + str(self.f_2DC))
         f.write("      " + str(self.f_3DC)  + "      "  + str(self.f_4DC)  + "       "  + str(self.f_5DC)  + "      "  + str(self.f_6DC))
         f.write("      " + str(self.f_7DC)  + "      " + str(self.f_8DC) + "\n")
-
