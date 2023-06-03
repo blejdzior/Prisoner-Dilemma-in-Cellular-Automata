@@ -4,10 +4,7 @@ Created on Sat Apr 22 12:30:18 2023
 
 @author: pozdro
 """
-import copy
-
 from PySide6.QtWidgets import QTableWidgetItem
-from PySide6.QtGui import (QBrush, QColor)
 import numpy as np
 
 class Cell(QTableWidgetItem):
