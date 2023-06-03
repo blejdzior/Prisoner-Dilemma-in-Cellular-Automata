@@ -58,6 +58,8 @@ class CA:
         self.evolution()
         self.statistics = self.calculate_statistics()
 
+    def get_avg_payoff(self, iter):
+        return self.avg_payoff[iter]
 
     def create_CA(self, p_init_C, allC, allD, kD, kC, minK, maxK):
         CA_cells = np.empty((self.M_rows, self.N_cols), dtype=object)
