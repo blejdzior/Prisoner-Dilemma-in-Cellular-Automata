@@ -1,20 +1,22 @@
 import time
-from PySide6.QtCore import QRunnable
+from PySide6.QtCore import QRunnable, QMutex
 
 class Animation(QRunnable):
+
       def __init__(self, MainWindow, iter, numOfIters, sleepTime):
          super().__init__()
          self.mainWindow = MainWindow
          self.iter = iter
          self.numofIters = numOfIters
          if sleepTime > 0.3:
-            self.sleepTime = sleepTime
+            self.sleepTime = 0.3
             self.extendedSleepTime = 1.3 * sleepTime
          else:
-             self.sleepTime = 0.3
+             self.sleepTime = 0.1
              self.extendedSleepTime = 0.4
          self.isPaused = False
          self.isRunning = True
+
 
       def run(self):
          print("Running a new thread")
@@ -22,6 +24,7 @@ class Animation(QRunnable):
             if self.isPaused == True:
                 time.sleep(0.1)
                 continue
+            self.mutex.lock()
             self.mainWindow.start_animation()
             self.mainWindow.update_graph(self.iter)
             self.iter += 1
@@ -29,6 +32,7 @@ class Animation(QRunnable):
          self.mainWindow.enableStartButton()
          self.isRunning = False
          print("Thread done")
+         self.mainWindow.isAnimationRunning = False
 
       def extendSleepTime(self):
           self.sleepTime = self.extendedSleepTime
