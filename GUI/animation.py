@@ -24,7 +24,6 @@ class Animation(QRunnable):
             if self.isPaused == True:
                 time.sleep(0.1)
                 continue
-            self.mutex.lock()
             self.mainWindow.start_animation()
             self.mainWindow.update_graph(self.iter)
             self.iter += 1
