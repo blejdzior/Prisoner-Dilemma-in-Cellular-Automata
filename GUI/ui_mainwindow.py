@@ -8,17 +8,10 @@
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
 
-from PySide6.QtCore import (QCoreApplication, QDate, QDateTime, QLocale,
-    QMetaObject, QObject, QPoint, QRect,
-    QSize, QTime, QUrl, Qt)
-from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
-    QFont, QFontDatabase, QGradient, QIcon,
-    QImage, QKeySequence, QLinearGradient, QPainter,
-    QPalette, QPixmap, QRadialGradient, QTransform)
+from PySide6.QtCore import (QCoreApplication, QMetaObject, QRect)
 from PySide6.QtWidgets import (QButtonGroup, QCheckBox, QDoubleSpinBox,
     QFrame, QGraphicsView, QTableWidget, QGroupBox, QLCDNumber,
-    QLabel, QMainWindow, QMenuBar, QPushButton,
-    QRadioButton, QSpinBox, QStatusBar,
+    QLabel, QMenuBar, QPushButton, QRadioButton, QSpinBox, QStatusBar,
     QWidget, QAbstractItemView)
 
 class Ui_MainWindow(object):
@@ -401,7 +394,7 @@ class Ui_MainWindow(object):
         self.pushButton_start.setObjectName(u"pushButton_start")
         self.pushButton_start.setGeometry(QRect(240, 540, 111, 91))
         self.pushButton_start.clicked.connect(MainWindow.startSimulation)
-        # self.pushButton_start.clicked.connect(self.zeroSpinBoxIter)
+        self.pushButton_start.clicked.connect(MainWindow.create_graph)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QMenuBar(MainWindow)
         self.menubar.setObjectName(u"menubar")

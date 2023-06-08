@@ -46,6 +46,30 @@ class Statistics:
         self.f_cr_1s = f_cr_1s
 
 
+    def get_iter(self):
+        return self.iter
+    
+    def get_f_C(self):
+        return self.f_C
+    
+    def get_f_C_corr(self):
+        return self.f_C_corr
+    
+    def get_f_strat_ch(self):
+        return self.f_strat_ch
+
+    def write_stats_to_file(self, f):
+        f.write(str(self.iter) + "             " + str(self.f_C) + "        " + str(self.f_C_corr)  + "          "  + str(self.av_sum))
+        f.write("           " + str(self.f_allC) + "      " + str(self.f_allD) + "        "  + str(self.f_kD) + "      ")
+        f.write(str(self.f_kC) + "      " + str(self.f_kDC)  + "      "  + str(self.f_strat_ch)  + "             "  + str(self.f_0D))
+        f.write("      " + str(self.f_1D)  + "      " + str(self.f_2D)  + "      " + str(self.f_3D)  + "      "  + str(self.f_4D))
+        f.write("      " + str(self.f_5D)  + "      "  + str(self.f_6D)  + "      "  + str(self.f_7D)  + "       "  + str(self.f_8D))
+        f.write("      " + str(self.f_0C)  + "      " + str(self.f_1C)  + "      " + str(self.f_2C)  + "      "  + str(self.f_3C))
+        f.write("       " + str(self.f_4C)  + "      "  + str(self.f_5C)  + "      "  + str(self.f_6C)  + "      "  + str(self.f_7C))
+        f.write("      " + str(self.f_8C)  + "      " + str(self.f_0DC)  + "      " + str(self.f_1DC)  + "      "  + str(self.f_2DC))
+        f.write("      " + str(self.f_3DC)  + "      "  + str(self.f_4DC)  + "       "  + str(self.f_5DC)  + "      "  + str(self.f_6DC))
+        f.write("      " + str(self.f_7DC)  + "      " + str(self.f_8DC) + "\n")
+
     def write_stats_to_file(self, f, f2):
         f.write("{0:<10.0f}{1:<13.4f}{2:<18.4f}{3:<16.4f}".format(self.iter, self.f_C, self.f_C_corr, self.av_sum))
         f.write("{0:<16.4f}{1:<16.4f}{2:<14.4f}".format(self.f_allC, self.f_allD, self.f_kD))
@@ -59,4 +83,5 @@ class Statistics:
         f2.write("{0:<14.4f}{1:<15.4f}{2:<15.4f}{3:<15.4f}".format(self.f_8C, self.f_0DC, self.f_1DC, self.f_2DC))
         f2.write("{0:<15.4f}{1:<15.4f}{2:<15.4f}{3:<15.4f}".format(self.f_3DC, self.f_4DC, self.f_5DC, self.f_6DC))
         f2.write("{0:<15.4f}{1:<15.4f}\n".format(self.f_7DC, self.f_8DC))
+
 

@@ -9,11 +9,11 @@ import math
 import time
 import asyncio
 
-from PySide6.QtWidgets import (QMainWindow, QTableWidgetItem, QMessageBox)
+from PySide6.QtWidgets import (QMainWindow, QTableWidgetItem, QMessageBox, QGraphicsScene)
 from PySide6.QtGui import (QColor, QPixmap)
 from PySide6.QtCore import (QRect, QThreadPool, QMutex)
 from GUI.ui_mainwindow import Ui_MainWindow
-from PySide6.QtGui import (QPen)
+from PySide6.QtGui import (QBrush, QGradient, QRadialGradient)
 
 
 from data.canvas import Canvas
@@ -29,7 +29,14 @@ from data.payoff import Payoff
 
 from algorithm.CA import CA
 from GUI.animation import Animation
+
+
+from GUI.gnuplot import GnuplotCanvas
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+import numpy as np
 from algorithm.StatisticsMultirun import StatisticsMultirun
+
         
 
 class MainWindow(QMainWindow):
@@ -688,4 +695,22 @@ class MainWindow(QMainWindow):
         iter = self.ui.spinBox_iters.value()
         self.ui.spinBox_iters.setValue(iter + 1)
         self.ui.graphicsView_CA.repaint()
+
+    def create_graph(self):
+        scene = QGraphicsScene()
+        x = self.ui.spinBox_num_of_iter.value()
+        self.gnuplot = GnuplotCanvas(self, x_len=x, y_range=[0, 1])
+        scene.addWidget(self.gnuplot)
+        self.ui.graphicsView_gnuplot.setScene(scene)
+
+    def update_graph(self, iter):
+        for statistics in self.automata.statistics:
+            if (statistics.get_iter() == iter):
+                f_C = statistics.get_f_C()
+                f_C_corr = statistics.get_f_C_corr()
+                f_strat_ch = statistics.get_f_strat_ch()
+                break
+            
+        avg_payoff = self.automata.get_avg_payoff(iter)
+        self.gnuplot.updateCanvas(f_C, f_C_corr, avg_payoff[1], f_strat_ch)
 

@@ -73,6 +73,10 @@ class CA:
         self.evolution()
         self.statistics = self.calculate_statistics()
 
+
+    def get_avg_payoff(self, iter):
+        return self.avg_payoff[iter]
+
     def create_CA_debug(self):
         # read file to list of strings
         f1 = open("CA_states_deb.txt", "r")
