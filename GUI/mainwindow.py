@@ -11,7 +11,7 @@ import asyncio
 
 from PySide6.QtWidgets import (QMainWindow, QTableWidgetItem, QMessageBox, QGraphicsScene)
 from PySide6.QtGui import (QColor, QPixmap)
-from PySide6.QtCore import (QRect, QThreadPool, QMutex)
+from PySide6.QtCore import (QRect, QThreadPool, QMutex, Slot, Signal, QThread)
 from GUI.ui_mainwindow import Ui_MainWindow
 from PySide6.QtGui import (QBrush, QGradient, QRadialGradient)
 
@@ -40,6 +40,7 @@ from algorithm.StatisticsMultirun import StatisticsMultirun
         
 
 class MainWindow(QMainWindow):
+    anim_start_signal = Signal()
     def __init__(self):
         super().__init__()
         self.ui = Ui_MainWindow()
@@ -48,6 +49,13 @@ class MainWindow(QMainWindow):
         self.mutex = QMutex()
         self.isAnimationRunning = False
         self.visualization_mode = 0
+
+        self.animation = Animation(0, 0, 0)
+        self.animation.signal.connect(self.animation_signal_handler)
+        self.anim_start_signal.connect(self.animation.run)
+
+
+        # self.animation.signal.connect(self.update_graph)
 
     def resetIterations(self):
         print("Reset iteracji")
@@ -686,15 +694,24 @@ class MainWindow(QMainWindow):
             self.isAnimationRunning = True
             self.ui.disableStartButton()
             numOfIters = self.iterations.num_of_iter
-            microSleepTime = 2 * self.data.canvas.rows * self.data.canvas.cols
-            secSleepTime = microSleepTime / 10000
-            self.animation = Animation(self, 0, numOfIters, secSleepTime)
-            self.threadpool.start(self.animation)
+            self.animation.numofIters = numOfIters
+            self.animation_thread = QThread()
+            self.animation.moveToThread(self.animation_thread)
+            self.animation_thread.start()
+            self.anim_start_signal.emit()
 
     def start_animation(self):
         iter = self.ui.spinBox_iters.value()
         self.ui.spinBox_iters.setValue(iter + 1)
-        self.ui.graphicsView_CA.repaint()
+        # self.ui.graphicsView_CA.repaint(
+
+    @Slot(int)
+    def animation_signal_handler(self, iter):
+        # self.ui.spinBox_iters.blockSignals(True)
+        self.ui.spinBox_iters.setValue(iter)
+
+        # self.ui.spinBox_iters.blockSignals(False)
+
 
     def create_graph(self):
         scene = QGraphicsScene()
@@ -703,6 +720,7 @@ class MainWindow(QMainWindow):
         scene.addWidget(self.gnuplot)
         self.ui.graphicsView_gnuplot.setScene(scene)
 
+    @Slot(int)
     def update_graph(self, iter):
         for statistics in self.automata.statistics:
             if (statistics.get_iter() == iter):
