@@ -504,7 +504,6 @@ class CA:
 
     # mutation of strategy - for now simple random choice
     def mutate_strat(self, cell):
-        x = random.randint(0, 4)
         if cell.strategy == 0:
             cell.strategy = 1
         elif cell.strategy == 1:
