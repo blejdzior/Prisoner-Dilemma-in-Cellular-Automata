@@ -261,7 +261,7 @@ class CA:
 
     def evolution(self):
 
-        for k in range(0, self.num_of_iter - 1):
+        for k in range(0, self.num_of_iter):
             sum_payoff_temp = 0
             iter1, cells = self.cells[k]
             change_strat_count = 0
@@ -377,123 +377,125 @@ class CA:
                 _, avg_payoff = self.avg_payoff[k]
                 self.f.write("\nav_pay = {0:<5.4f}\n".format(avg_payoff))
 
-            # cells change strategy for competition winning cell's strategy with sync_prob probability
-            for i in range(1, self.M_rows - 1):
-                for j in range(1, self.N_cols - 1):
-                    if cells_temp[i, j].change_strategy:
-                        if self.is_tournament:
-                            if self.tournament_competition(cells, cells_temp, i, j):
-                                change_strat_count += 1
-                        else:
-                            if self.roulette_competition(cells, cells_temp, i, j):
-                                change_strat_count += 1
+            if k != self.num_of_iter - 1:
 
-                    if cells_temp[i, j].strategy != cells[i, j].strategy:
-                        change_strat_count_final += 1
-                    else:
-                        if (cells[i, j].strategy == 2 or cells[i, j].strategy == 3 or cells[i, j].strategy == 4) and \
-                                cells[i, j].k != cells_temp[i, j].k:
-                            change_strat_count_final += 1
-                    # strategy mutation with p_strat_mut probability
-                    if self.p_strat_mut != 0:
-                        x = random.random()
-                        if x <= self.p_strat_mut:
-                            self.mutate_strat(cells_temp[i, j])
-
-            # update cell states depending on strategy
-            for i in range(1, self.M_rows - 1):
-                for j in range(1, self.N_cols - 1):
-
-                    self.update_cell_states(cells, cells_temp, i, j)
-
-                    # resetting group_of_1s and 0s to avoid false state changes in next step
-                    cells_temp[i, j].group_of_1s = False
-                    cells_temp[i, j].group_of_0s = False
-
-                    # cell state mutation with p_state_mut probability
-                    if self.p_state_mut != 0:
-                        x = random.random()
-                        if x <= self.p_state_mut:
-                            self.mutate_state(cells_temp[i, j])
-
-            if self.is_debug and self.is_test2:
-                # winner_agent
-                self.f.write("\nWinner agent:\n")
+                # cells change strategy for competition winning cell's strategy with sync_prob probability
                 for i in range(1, self.M_rows - 1):
                     for j in range(1, self.N_cols - 1):
-                        self.f.write("{0:<4}\n".format(cells[i, j].winner_agent))
+                        if cells_temp[i, j].change_strategy:
+                            if self.is_tournament:
+                                if self.tournament_competition(cells, cells_temp, i, j):
+                                    change_strat_count += 1
+                            else:
+                                if self.roulette_competition(cells, cells_temp, i, j):
+                                    change_strat_count += 1
 
-                # CA start
-                self.f.write("\nCA_strat:\n")
-                for i in range(self.M_rows):
-                    for j in range(self.N_cols):
-                        if cells_temp[i, j].strategy == 1 or cells_temp[i, j].strategy == 0:
-                            self.f.write("{0:<4}".format(cells_temp[i, j].strategy))
+                        if cells_temp[i, j].strategy != cells[i, j].strategy:
+                            change_strat_count_final += 1
                         else:
-                            self.f.write("{0:1}{1:<3}".format(cells_temp[i, j].strategy, cells_temp[i, j].k))
-                    self.f.write("\n")
+                            if (cells[i, j].strategy == 2 or cells[i, j].strategy == 3 or cells[i, j].strategy == 4) and \
+                                    cells[i, j].k != cells_temp[i, j].k:
+                                change_strat_count_final += 1
+                        # strategy mutation with p_strat_mut probability
+                        if self.p_strat_mut != 0:
+                            x = random.random()
+                            if x <= self.p_strat_mut:
+                                self.mutate_strat(cells_temp[i, j])
 
-                # print kD strat
-                self.f.write("\nCA_kD_strat:\n")
-                for i in range(self.M_rows):
-                    for j in range(self.N_cols):
-                        if cells_temp[i, j].strategy == 2:
-                            self.f.write("{0:1}{1:<3}".format(cells_temp[i, j].strategy, cells_temp[i, j].k))
-                        else:
-                            self.f.write("{0:<4}".format(-1))
-                    self.f.write("\n")
+                # update cell states depending on strategy
+                for i in range(1, self.M_rows - 1):
+                    for j in range(1, self.N_cols - 1):
 
-                # print kC strat
-                self.f.write("\nCA_kC_strat:\n")
-                for i in range(self.M_rows):
-                    for j in range(self.N_cols):
-                        if cells_temp[i, j].strategy == 3:
-                            self.f.write("{0:1}{1:<3}".format(cells_temp[i, j].strategy, cells_temp[i, j].k))
-                        else:
-                            self.f.write("{0:<4}".format(-1))
-                    self.f.write("\n")
+                        self.update_cell_states(cells, cells_temp, i, j)
 
-                # print kDC strat
-                self.f.write("\nCA_kDC_strat:\n")
-                for i in range(self.M_rows):
-                    for j in range(self.N_cols):
-                        if cells_temp[i, j].strategy == 4:
-                            self.f.write("{0:1}{1:<3}".format(cells_temp[i, j].strategy, cells_temp[i, j].k))
-                        else:
-                            self.f.write("{0:<4}".format(-1))
-                    self.f.write("\n")
-                f_strat_ch = change_strat_count / ((self.M_rows - 2) * (self.N_cols - 2))
-                f_strat_ch_final = change_strat_count_final / ((self.M_rows - 2) * (self.N_cols - 2))
-                self.f.write("\nf_start_ch = {0:4.3f}\n".format(f_strat_ch))
-                self.f.write("\nf_start_ch_fin = {0:4.3f}\n".format(f_strat_ch_final))
+                        # resetting group_of_1s and 0s to avoid false state changes in next step
+                        cells_temp[i, j].group_of_1s = False
+                        cells_temp[i, j].group_of_0s = False
 
-                # print states
-                self.f.write("\nCA_states:\n")
-                for i in range(self.M_rows):
-                    for j in range(self.N_cols):
-                        self.f.write("{0:<2}".format(cells_temp[i, j].state))
-                    self.f.write("\n")
+                        # cell state mutation with p_state_mut probability
+                        if self.p_state_mut != 0:
+                            x = random.random()
+                            if x <= self.p_state_mut:
+                                self.mutate_state(cells_temp[i, j])
 
-            # mutation when cell is in group od 1s or group of 0s
-            # (shouldn't it be done earlier?)
-            for i in range(1, self.M_rows - 1):
-                for j in range(1, self.N_cols - 1):
-                    cells_temp[i, j].group_of_1s = self.is_group_of_1s(cells_temp, i, j)
-                    if not cells_temp[i, j].group_of_1s:
-                        cells_temp[i, j].group_of_0s = self.is_group_of_0s(cells_temp, i, j)
-                    if cells_temp[i, j].group_of_0s:
-                        x = random.random()
-                        if x <= self.p_neigh_0_mut:
-                            cells_temp[i, j].state = 1
-                    elif cells_temp[i, j].group_of_1s:
-                        x = random.random()
-                        if x <= self.p_neigh_1_mut:
-                            cells_temp[i, j].state = 0
-            self.misc_stats.append((k + 1, change_strat_count, change_strat_count_final))
-            self.cells.append((k + 1, cells_temp))
+                if self.is_debug and self.is_test2:
+                    # winner_agent
+                    self.f.write("\nWinner agent:\n")
+                    for i in range(1, self.M_rows - 1):
+                        for j in range(1, self.N_cols - 1):
+                            self.f.write("{0:<4}\n".format(cells[i, j].winner_agent))
 
-        # not ideal but works...
-        self.avg_payoff.append(self.avg_payoff[self.num_of_iter - 2])
+                    # CA start
+                    self.f.write("\nCA_strat:\n")
+                    for i in range(self.M_rows):
+                        for j in range(self.N_cols):
+                            if cells_temp[i, j].strategy == 1 or cells_temp[i, j].strategy == 0:
+                                self.f.write("{0:<4}".format(cells_temp[i, j].strategy))
+                            else:
+                                self.f.write("{0:1}{1:<3}".format(cells_temp[i, j].strategy, cells_temp[i, j].k))
+                        self.f.write("\n")
+
+                    # print kD strat
+                    self.f.write("\nCA_kD_strat:\n")
+                    for i in range(self.M_rows):
+                        for j in range(self.N_cols):
+                            if cells_temp[i, j].strategy == 2:
+                                self.f.write("{0:1}{1:<3}".format(cells_temp[i, j].strategy, cells_temp[i, j].k))
+                            else:
+                                self.f.write("{0:<4}".format(-1))
+                        self.f.write("\n")
+
+                    # print kC strat
+                    self.f.write("\nCA_kC_strat:\n")
+                    for i in range(self.M_rows):
+                        for j in range(self.N_cols):
+                            if cells_temp[i, j].strategy == 3:
+                                self.f.write("{0:1}{1:<3}".format(cells_temp[i, j].strategy, cells_temp[i, j].k))
+                            else:
+                                self.f.write("{0:<4}".format(-1))
+                        self.f.write("\n")
+
+                    # print kDC strat
+                    self.f.write("\nCA_kDC_strat:\n")
+                    for i in range(self.M_rows):
+                        for j in range(self.N_cols):
+                            if cells_temp[i, j].strategy == 4:
+                                self.f.write("{0:1}{1:<3}".format(cells_temp[i, j].strategy, cells_temp[i, j].k))
+                            else:
+                                self.f.write("{0:<4}".format(-1))
+                        self.f.write("\n")
+                    f_strat_ch = change_strat_count / ((self.M_rows - 2) * (self.N_cols - 2))
+                    f_strat_ch_final = change_strat_count_final / ((self.M_rows - 2) * (self.N_cols - 2))
+                    self.f.write("\nf_start_ch = {0:4.3f}\n".format(f_strat_ch))
+                    self.f.write("\nf_start_ch_fin = {0:4.3f}\n".format(f_strat_ch_final))
+
+                    # print states
+                    self.f.write("\nCA_states:\n")
+                    for i in range(self.M_rows):
+                        for j in range(self.N_cols):
+                            self.f.write("{0:<2}".format(cells_temp[i, j].state))
+                        self.f.write("\n")
+
+                # mutation when cell is in group od 1s or group of 0s
+                # (shouldn't it be done earlier?)
+                for i in range(1, self.M_rows - 1):
+                    for j in range(1, self.N_cols - 1):
+                        cells_temp[i, j].group_of_1s = self.is_group_of_1s(cells_temp, i, j)
+                        if not cells_temp[i, j].group_of_1s:
+                            cells_temp[i, j].group_of_0s = self.is_group_of_0s(cells_temp, i, j)
+                        if cells_temp[i, j].group_of_0s:
+                            x = random.random()
+                            if x <= self.p_neigh_0_mut:
+                                cells_temp[i, j].state = 1
+                        elif cells_temp[i, j].group_of_1s:
+                            x = random.random()
+                            if x <= self.p_neigh_1_mut:
+                                cells_temp[i, j].state = 0
+                self.misc_stats.append((k + 1, change_strat_count, change_strat_count_final))
+                self.cells.append((k + 1, cells_temp))
+
+        # # not ideal but works...
+        # self.avg_payoff.append(self.avg_payoff[self.num_of_iter - 2])
 
     # mutation of cell state by negating current state
     def mutate_state(self, cell):

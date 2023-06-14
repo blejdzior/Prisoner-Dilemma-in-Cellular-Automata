@@ -52,7 +52,13 @@ class MainWindow(QMainWindow):
 
         self.animation = Animation(0, 0, 0)
         self.animation.signal.connect(self.animation_signal_handler)
+        self.animation.signal.connect(self.update_graph)
         self.anim_start_signal.connect(self.animation.run)
+
+        self.animation_thread = QThread()
+        self.animation.moveToThread(self.animation_thread)
+        self.animation.signalFinished.connect(self.animation_thread.quit)
+        self.animation_thread.finished.connect(self.isRunning_false)
 
 
         # self.animation.signal.connect(self.update_graph)
@@ -334,6 +340,8 @@ class MainWindow(QMainWindow):
             self.ui.spinBox_iters.setValue(0)
 
     def startSimulation(self):
+        self.ui.disableStartButton()
+
         self.closeRunningThreads()
 
         #Tutaj należy sprawdzić wszystkie wprowadzone dane zanim zostaną one przekazane dalej
@@ -685,6 +693,8 @@ class MainWindow(QMainWindow):
     def pause_animation(self):
         self.animation.stop()
         self.enableStartButton()
+    def isRunning_false(self):
+        self.isAnimationRunning = False
 
     # create a new seperate thread for simulation
     def start_animation_thread(self):
@@ -695,10 +705,10 @@ class MainWindow(QMainWindow):
             self.ui.disableStartButton()
             numOfIters = self.iterations.num_of_iter
             self.animation.numofIters = numOfIters
-            self.animation_thread = QThread()
-            self.animation.moveToThread(self.animation_thread)
+            self.animation.iter = 0
             self.animation_thread.start()
             self.anim_start_signal.emit()
+
 
     def start_animation(self):
         iter = self.ui.spinBox_iters.value()

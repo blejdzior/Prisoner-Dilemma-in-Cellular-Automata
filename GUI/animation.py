@@ -4,6 +4,7 @@ from PySide6.QtCore import QRunnable, QMutex, Signal, QObject
 
 class Animation(QObject):
     signal = Signal(int)
+    signalFinished = Signal()
     def __init__(self, iter, numOfIters, sleepTime):
 
         super().__init__()
@@ -22,9 +23,7 @@ class Animation(QObject):
     def run(self):
 
         print("Running a new thread")
-
-
-        while self.iter < self.numofIters - 1:
+        while self.iter < self.numofIters:
             if self.isPaused == True:
                 time.sleep(0.1)
                 continue
@@ -35,6 +34,7 @@ class Animation(QObject):
             time.sleep(0.2)
         # self.mainWindow.enableStartButton()
         self.isRunning = False
+        self.signalFinished.emit()
         print("Thread done")
 
         # self.mainWindow.isAnimationRunning = False
