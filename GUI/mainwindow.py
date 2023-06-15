@@ -714,6 +714,7 @@ class MainWindow(QMainWindow):
         self.animation.stop()
         self.enableStartButton()
     def isRunning_false(self):
+        self.animationDoneMessage()
         self.isAnimationRunning = False
 
     # create a new seperate thread for simulation
@@ -761,4 +762,11 @@ class MainWindow(QMainWindow):
             
         avg_payoff = self.automata.get_avg_payoff(iter)
         self.gnuplot.updateCanvas(f_C, f_C_corr, avg_payoff[1], f_strat_ch)
+
+    def animationDoneMessage(self):
+        msg = QMessageBox()
+        msg.setIcon(QMessageBox.Information)
+        msg.setText("Animation is done playing.")
+        msg.setWindowTitle("Done!")
+        msg.exec_()
 
