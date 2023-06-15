@@ -74,11 +74,31 @@ class MainWindow(QMainWindow):
         msg.setWindowTitle("Invalid input")
         msg.exec_()
 
+    def selectVisualizationMode(self, mode):
+        match mode:
+            case 0:
+                self.state_color_handler()
+            case 1:
+                self.strategies_color_handler()
+            case 2:
+                self.kD_strategies_color_handler()
+            case 3:
+                self.kC_strategies_color_handler()
+            case 4:
+                self.kDC_strategies_color_handler()
+            case 5:
+                self.action_color_handler()
+
     def saveImage(self):
-        pixmap = QPixmap(self.ui.graphicsView_CA.size())
-        self.ui.graphicsView_CA.render(pixmap)
-        fileName = "Images//image" + str(self.ui.lcdNumber_iters.value()) + str(self.visualization_mode) + ".png"
-        pixmap.save(fileName, "PNG", -1)
+        currentMode = self.visualization_mode
+        for mode in range(6):
+            self.selectVisualizationMode(mode)
+            pixmap = QPixmap(self.ui.graphicsView_CA.size())
+            self.ui.graphicsView_CA.render(pixmap)
+            fileName = "Images//image" + str(self.ui.lcdNumber_iters.value()) + str(self.visualization_mode) + ".png"
+            pixmap.save(fileName, "PNG", -1)
+        self.selectVisualizationMode(currentMode)
+        
 
     def changeCellsColor(self, selected, R, G, B, opacity=255):
         for ix in selected:
@@ -527,8 +547,8 @@ class MainWindow(QMainWindow):
 
 
     def save_results(self):
-        f = open("result-a.txt", "w")
-        f2 = open("result-b.txt", "w")
+        f = open("m_results-a.txt", "w")
+        f2 = open("m_results-b.txt", "w")
 
         # result-a
         f.write("#num_of_iter: " + str(self.data.iterations.num_of_iter))
