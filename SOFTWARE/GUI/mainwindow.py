@@ -657,7 +657,7 @@ class MainWindow(QMainWindow):
 
             if 0 < self.data.iterations.num_of_exper - 1 == i:
                 statistics_multirun = StatisticsMultirun(stats_multirun, self.data.iterations.num_of_iter, self.data.iterations.num_of_exper)
-                f3 = open("std-result-a.txt", "w")
+                f3 = open("m_RESULTS//std-result-a.txt", "w")
                 f3.write("#num_of_iter: " + str(self.data.iterations.num_of_iter))
                 f3.write("\n#num_of_exper: " + str(self.data.iterations.num_of_exper))
                 f3.write("\n#rows: " + str(self.data.canvas.rows))
