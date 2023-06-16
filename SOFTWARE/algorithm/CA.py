@@ -79,8 +79,8 @@ class CA:
 
     def create_CA_debug(self):
         # read file to list of strings
-        f1 = open("CA_states_deb.txt", "r")
-        f2 = open("CA_strat_deb.txt", "r")
+        f1 = open("DATA//CA_states_deb.txt", "r")
+        f2 = open("DATA//CA_strat_deb.txt", "r")
         ca_states_lines = f1.readlines()
         ca_strat_lines = f2.readlines()
 
