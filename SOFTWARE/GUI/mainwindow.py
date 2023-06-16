@@ -89,6 +89,13 @@ class MainWindow(QMainWindow):
             case 5:
                 self.action_color_handler()
 
+    def savedImagesMessage(self):
+        msg = QMessageBox()
+        msg.setIcon(QMessageBox.Information)
+        msg.setText("Images saved.")
+        msg.setWindowTitle("Done!")
+        msg.exec_()
+
     def saveImage(self):
         currentMode = self.visualization_mode
         for mode in range(6):
@@ -98,6 +105,7 @@ class MainWindow(QMainWindow):
             fileName = "IMAGES//image" + str(self.ui.lcdNumber_iters.value()) + str(self.visualization_mode) + ".png"
             pixmap.save(fileName, "PNG", -1)
         self.selectVisualizationMode(currentMode)
+        self.savedImagesMessage()
         
 
     def changeCellsColor(self, selected, R, G, B, opacity=255):
