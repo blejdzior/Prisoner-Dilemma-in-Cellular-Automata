@@ -622,7 +622,7 @@ class MainWindow(QMainWindow):
         if self.data.iterations.num_of_exper > 1:
             self.save_parameters(f3)
 
-        stats_multirun_temp = []
+
         stats_multirun = []
 
 
@@ -667,8 +667,7 @@ class MainWindow(QMainWindow):
                                                                         "f_3DC",
                                                                         "f_4DC", "f_5DC", "f_6DC", "f_7DC", "f_8DC"))
 
-
-
+            stats_multirun_temp = []
             for statistics in self.automata.statistics:
                 if i == 0:
                     statistics.write_stats_to_file_b(f2)
