@@ -94,7 +94,7 @@ class CA:
                 # Cells on borders have predefined static properties.
                 if i == 0 or i == self.M_rows - 1 or j == 0 or j == self.N_cols - 1:
                     cells[i, j] = Cell(_id=0, x=j, y=i, state=0, action=1, strategy=0)
-                    cells[i, j].avg_payoff = 1.0
+                    cells[i, j].avg_payoff = 0
                     continue
                 strategy = int(ca_strat_lines_separated[j - 1][0])
                 if strategy == 1 or strategy == 0:
@@ -204,7 +204,7 @@ class CA:
                 # Cells on borders have predefined static properties.
                 if i == 0 or i == self.M_rows - 1 or j == 0 or j == self.N_cols - 1:
                     CA_cells[i, j] = Cell(_id=0, x=j, y=i, state=0, action=1, strategy=0)
-                    CA_cells[i, j].avg_payoff = 1.0
+                    CA_cells[i, j].avg_payoff = 0
                     continue
                 else:
                     # the rest of cells have randomly assigned states and strategies
@@ -212,14 +212,14 @@ class CA:
                     strategy, k = self.init_cell_strategy(allC, allD, kD, kC, minK, maxK)
                     CA_cells[i, j] = Cell(_id=id_, x=j, y=i, strategy=strategy, k=k, state=state)
                 id_ += 1
-        for i in range(1, self.M_rows - 1):
-            for j in range(1, self.N_cols - 1):
-                CA_cells[i, j].group_of_1s = self.is_group_of_1s(CA_cells, i, j)
-                if CA_cells[i, j].group_of_1s:
-                    CA_cells[i, j].group_of_0s = False
-                    continue
-                else:
-                    CA_cells[i, j].group_of_0s = self.is_group_of_0s(CA_cells, i, j)
+        # for i in range(1, self.M_rows - 1):
+        #     for j in range(1, self.N_cols - 1):
+        #         CA_cells[i, j].group_of_1s = self.is_group_of_1s(CA_cells, i, j)
+        #         if CA_cells[i, j].group_of_1s:
+        #             CA_cells[i, j].group_of_0s = False
+        #             continue
+        #         else:
+        #             CA_cells[i, j].group_of_0s = self.is_group_of_0s(CA_cells, i, j)
 
         return CA_cells
 
@@ -266,19 +266,19 @@ class CA:
             iter1, cells = self.cells[k]
             change_strat_count = 0
             change_strat_count_final = 0
-            if self.is_debug and self.is_test1:
-                if k != 0:
-                  self.f.write("\niter= " + str(k))
+            if self.is_test1:
+                self.f.write("\niter = " + str(k))
                 self.f.write("\nCALCULATE C*/D*\n")
             # decide action
             for i in range(1, self.M_rows - 1):
                 for j in range(1, self.N_cols - 1):
                     cells[i, j].action = self.decide_action(cells, i, j)
-                    cells[i, j].group_of_1s = self.is_group_of_1s(cells, i, j)
-                    if not cells[i, j].group_of_1s:
-                        cells[i, j].group_of_0s = self.is_group_of_0s(cells, i, j)
-                    if self.is_debug and self.is_test1:
-                        self.f.write("\nid={0:3}\n".format(cells[i, j].id))
+                    if k == 0:
+                        cells[i, j].group_of_1s = self.is_group_of_1s(cells, i, j)
+                        if not cells[i, j].group_of_1s:
+                            cells[i, j].group_of_0s = self.is_group_of_0s(cells, i, j)
+                    if self.is_test1:
+                        self.f.write("\nid={0:<3}\n".format(cells[i, j].id))
                         self.f.write("My_neighb_states:\n")
                         self.f.write("{0:2}{1:2}{2:2}{3:2}".format(cells[i - 1, j].state, cells[i - 1, j + 1].state,
                                                                    cells[i, j + 1].state, cells[i + 1, j + 1].state))
@@ -286,7 +286,7 @@ class CA:
                                                                    cells[i, j - 1].state, cells[i - 1, j - 1].state))
                     # decide whether cell will be changing strategy in this iteration with synch_prob probability
                     self.is_cell_changing_strategy(cells[i, j])
-            if self.is_debug and self.is_test1:
+            if self.is_test1:
                 self.f.write("\nCA_actions:\n")
                 for i in range(self.M_rows):
                     for j in range(self.N_cols):
@@ -318,8 +318,7 @@ class CA:
 
             avg_payoff_temp = sum_payoff_temp / ((self.M_rows - 2) * (self.N_cols - 2))
 
-
-            if self.is_debug and self.is_test1:
+            if self.is_test1:
                 # print payoffs
                 self.f.write("\nPayoffs:\n")
                 for i in range(1, self.M_rows - 1):
@@ -355,7 +354,7 @@ class CA:
 
             self.avg_payoff.append((k, sum_payoff_temp / ((self.M_rows - 2) * (self.N_cols - 2))))
 
-            if self.is_debug and self.is_test1 and self.is_sharing:
+            if self.is_test1 and self.is_sharing:
                 # print payoffs
                 self.f.write("\nPayoffs after redistribution:\n")
                 for i in range(1, self.M_rows - 1):
@@ -418,7 +417,7 @@ class CA:
                             if x <= self.p_state_mut:
                                 self.mutate_state(cells_temp[i, j])
 
-                if self.is_debug and self.is_test2:
+                if self.is_test2:
                     # winner_agent
                     self.f.write("\nWinner agent:\n")
                     for i in range(1, self.M_rows - 1):
@@ -494,8 +493,6 @@ class CA:
                 self.misc_stats.append((k + 1, change_strat_count, change_strat_count_final))
                 self.cells.append((k + 1, cells_temp))
 
-        # # not ideal but works...
-        # self.avg_payoff.append(self.avg_payoff[self.num_of_iter - 2])
 
     # mutation of cell state by negating current state
     def mutate_state(self, cell):
@@ -569,12 +566,26 @@ class CA:
     def tournament_competition(self, cells, cells_temp, i, j):
         cells[i, j].winner_agent = -1
         max_payoff = (i, j, cells[i, j].sum_payoff)
-        for k in range(i - 1, i + 2):
-            for n in range(j - 1, j + 2):
-                if k == i and n == j:
-                    continue
-                if max_payoff[2] < cells[k, n].sum_payoff:
-                    max_payoff = (k, n, cells[k, n].sum_payoff)
+
+        if max_payoff[2] < cells[i - 1, j].sum_payoff:
+            max_payoff = (i - 1, j, cells[i - 1, j].sum_payoff)
+        if max_payoff[2] < cells[i - 1, j + 1].sum_payoff:
+            max_payoff = (i - 1, j + 1, cells[i - 1, j + 1].sum_payoff)
+
+        if max_payoff[2] < cells[i, j + 1].sum_payoff:
+            max_payoff = (i, j + 1, cells[i, j + 1].sum_payoff)
+
+        if max_payoff[2] < cells[i + 1, j + 1].sum_payoff:
+            max_payoff = (i + 1, j + 1, cells[i + 1, j + 1].sum_payoff)
+        if max_payoff[2] < cells[i + 1, j].sum_payoff:
+            max_payoff = (i + 1, j, cells[i + 1, j].sum_payoff)
+        if max_payoff[2] < cells[i + 1, j - 1].sum_payoff:
+            max_payoff = (i + 1, j - 1, cells[i + 1, j - 1].sum_payoff)
+
+        if max_payoff[2] < cells[i, j - 1].sum_payoff:
+            max_payoff = (i, j - 1, cells[i, j - 1].sum_payoff)
+        if max_payoff[2] < cells[i + 1, j - 1].sum_payoff:
+            max_payoff = (i + 1, j - 1, cells[i + 1, j - 1].sum_payoff)
         k, n, payoff = max_payoff
         cells[i, j].winner_agent = cells[k, n].id
         if k != i or n != j:
@@ -624,7 +635,6 @@ class CA:
         # action is D
         m = 0
         if cells[i, j].action == 0:
-            # if cell is in group_of_1s or group_of_0s then all cells in neighbourhood have action = D (= 0)
             # for loop over cell's neighbours
             for k in range(i - 1, i + 2):
                 for n in range(j - 1, j + 2):
@@ -639,7 +649,6 @@ class CA:
 
                     m += 1
         elif cells[i, j].action == 1:
-            # if cell's action is C then cell can't be in group_of_1s or group_of_0s
             for k in range(i - 1, i + 2):
                 for n in range(j - 1, j + 2):
                     if k == i and j == n:
@@ -655,18 +664,30 @@ class CA:
 
     def is_group_of_0s(self, cells, i, j):
         if cells[i, j].state == 0:
-            if cells[i - 1, j - 1].state == 0 and cells[i - 1, j].state == 0 and cells[i - 1, j + 1].state == 0:
-                if cells[i, j - 1].state == 0 and cells[i, j + 1].state == 0:
-                    if cells[i + 1, j - 1].state == 0 and cells[i + 1, j].state == 0 and cells[i + 1, j + 1].state == 0:
-                        return True
+            counter_0s = 0
+            for k in range(i - 1, i + 2):
+                for n in range(j - 1, j + 2):
+                    if k == i and j == n:
+                        continue
+                    if cells[k, n].state == 0:
+                        counter_0s += 1
+
+            if counter_0s == 8:
+                return True
         return False
 
     def is_group_of_1s(self, cells, i, j):
         if cells[i, j].state == 1:
-            if cells[i - 1, j - 1].state == 1 and cells[i - 1, j].state == 1 and cells[i - 1, j + 1].state == 1:
-                if cells[i, j - 1].state == 1 and cells[i, j + 1].state == 1:
-                    if cells[i + 1, j - 1].state == 1 and cells[i + 1, j].state == 1 and cells[i + 1, j + 1].state == 1:
-                        return True
+            counter_1s = 0
+            for k in range(i - 1, i + 2):
+                for n in range(j - 1, j + 2):
+                    if k == i and j == n:
+                        continue
+                    if cells[k, n].state == 1:
+                        counter_1s += 1
+
+            if counter_1s >= 1:
+                return True
         return False
 
     def is_cell_changing_strategy(self, cell):
@@ -869,10 +890,11 @@ class CA:
             f_7DC = num_of_7DC / num_of_kDC
             f_8DC = num_of_8DC / num_of_kDC
 
+            optim_solut = self.optimal_num_1s / ((self.M_rows - 2) * (self.N_cols - 2))
             # save stats as list of Statistics class instances
-            statistics.append((Statistics(k, f_C, f_C_corr, av_sum, f_allC, f_allD, f_kD, f_kC,
+            statistics.append(Statistics(k, f_C, f_C_corr, av_sum, f_allC, f_allD, f_kD, f_kC,
                                           f_kDC, f_strat_ch, f_0D, f_1D, f_2D, f_3D, f_4D, f_5D, f_6D,
                                           f_7D, f_8D, f_0C, f_1C, f_2C, f_3C, f_4C, f_5C, f_6C, f_7C, f_8C,
                                           f_0DC, f_1DC, f_2DC, f_3DC, f_4DC, f_5DC, f_6DC, f_7DC, f_8DC,
-                                          f_strat_ch_final, f_cr_0s, f_cr_1s)))
+                                          f_strat_ch_final, f_cr_0s, f_cr_1s, optim_solut))
         return statistics

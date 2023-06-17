@@ -1,0 +1,31 @@
+#num_of_iter: 1
+#num_of_exper: 1
+#rows: 5
+#cols: 5
+#p_init_C: 0.5
+#p_state_mut: 0.0
+#p_strat_mut: 0.0
+#p_0_neighb: 0.3
+#p_1_neighb: 0.1
+#comp_type: tournament
+#sharing: False
+#allC: 0.2
+#allD: 0.2
+#kD: 0.2
+#kC: 0.2
+#kDC: 0.2
+#k_values: 0 to 8
+#synchronity_prob: 1.0
+#optimal_num_of_1s: 676
+#playerC_opponentD_payoff: 0.0
+#playerC_opponentC_payoff: 1.0
+#playerD_opponentD_payoff: 0.1
+#playerD_opponentC_payoff: 1.2
+#debug:  True
+
+
+#Experiment: 0
+
+#seed: 7637363927733473225
+#iter     f_C          f_C_corr          av_sum          f_allC          f_allD          f_kD          f_kC          f_kDC          f_strat_ch          f_strat_ch_final          f_cr_0s          f_cr_1s          optim_solut          
+0         0.3200       0.0030            0.4790          0.2400          0.0800          0.2000        0.2800        0.2000         0.0000              0.0000                    0.0400           0.0000           27.04                
