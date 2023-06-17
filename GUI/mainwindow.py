@@ -71,7 +71,7 @@ class MainWindow(QMainWindow):
     def displayDataWarning(self):
         msg = QMessageBox()
         msg.setIcon(QMessageBox.Critical)
-        msg.setText("Can't process data.\nThe data entered is incorrect.")
+        msg.setText("Can't process DATA.\nThe DATA entered is incorrect.")
         msg.setWindowTitle("Invalid input")
         msg.exec_()
 
@@ -165,7 +165,7 @@ class MainWindow(QMainWindow):
                            self.data.synch.synch_prob, self.data.competition.isTournament, self.data.mutations.p_state_mut,
                            self.data.mutations.p_strat_mut, self.data.mutations.p_0_neighb_mut, self.data.mutations.p_1_neighb_mut,
                            self.data.debugger.isDebug, self.data.debugger.is_test1, self.data.debugger.is_test2, self.f,
-                           self.data.synch.optimal_num_1s,
+                           self.data.synch.optimal_num_1s, self.ui.radiobutton_pay_fun_1.isChecked(),
                            seed)
 
         k, cells = self.automata.cells[0]

@@ -16,7 +16,7 @@ class CA:
     def __init__(self, M_rows, N_cols, p_init_C, allC, allD, kD, kC, minK, maxK, num_of_iter,
                  payoff_C_C, payoff_C_D, payoff_D_C, payoff_D_D, is_sharing, synch_prob,
                  is_tournament, p_state_mut, p_strat_mut, p_0_neigh_mut, p_1_neigh_mut, is_debug, is_test1, is_test2,
-                 f, optimal_num1s, seed=None):
+                 f, optimal_num1s, is_payoff_1, seed=None):
         # size of CA
         self.M_rows = M_rows
         self.N_cols = N_cols
@@ -62,6 +62,13 @@ class CA:
         # min K, max K
         self.minK = minK
         self.maxK = maxK
+
+        # payoff func
+        self.is_payoff_1 = is_payoff_1
+        if not self.is_payoff_1:
+            self.is_payoff_2 = True
+        else:
+            self.is_payoff_2 = False
 
         # (iter, f_strat_ch, f_strat_ch_final)
         self.misc_stats = [(0, 0, 0)]
@@ -212,15 +219,6 @@ class CA:
                     strategy, k = self.init_cell_strategy(allC, allD, kD, kC, minK, maxK)
                     CA_cells[i, j] = Cell(_id=id_, x=j, y=i, strategy=strategy, k=k, state=state)
                 id_ += 1
-        # for i in range(1, self.M_rows - 1):
-        #     for j in range(1, self.N_cols - 1):
-        #         CA_cells[i, j].group_of_1s = self.is_group_of_1s(CA_cells, i, j)
-        #         if CA_cells[i, j].group_of_1s:
-        #             CA_cells[i, j].group_of_0s = False
-        #             continue
-        #         else:
-        #             CA_cells[i, j].group_of_0s = self.is_group_of_0s(CA_cells, i, j)
-
         return CA_cells
 
     # initially cell states are assigned randomly with p_init_C probability.
@@ -272,7 +270,8 @@ class CA:
             # decide action
             for i in range(1, self.M_rows - 1):
                 for j in range(1, self.N_cols - 1):
-                    cells[i, j].action = self.decide_action(cells, i, j)
+                    if self.is_payoff_1:
+                        cells[i, j].action = self.decide_action(cells, i, j)
                     if k == 0:
                         cells[i, j].group_of_1s = self.is_group_of_1s(cells, i, j)
                         if not cells[i, j].group_of_1s:
@@ -313,7 +312,10 @@ class CA:
             # calculate payoffs
             for i in range(1, self.M_rows - 1):
                 for j in range(1, self.N_cols - 1):
-                    self.calculate_payoff(cells, i, j)
+                    if self.is_payoff_1:
+                        self.calculate_payoff_1(cells, i, j)
+                    else:
+                        self.calculate_payoff_2(cells, i, j)
                     sum_payoff_temp += cells[i, j].avg_payoff
 
             avg_payoff_temp = sum_payoff_temp / ((self.M_rows - 2) * (self.N_cols - 2))
@@ -631,7 +633,7 @@ class CA:
             cells[i, j].payoffs[k] = cells[i, j].avg_payoff
         cells[i, j].sum_payoff = 8 * cells[i, j].avg_payoff
 
-    def calculate_payoff(self, cells, i, j):
+    def calculate_payoff_1(self, cells, i, j):
         # action is D
         m = 0
         if cells[i, j].action == 0:
@@ -661,6 +663,35 @@ class CA:
                         cells[i, j].sum_payoff += self.payoff_C_D
                     m += 1
         cells[i, j].avg_payoff = cells[i, j].sum_payoff / 8
+
+    def calculate_payoff_2(self, cells, i, j):
+        m = 0
+        if cells[i, j].state == 0:
+            for k in range(i - 1, i + 2):
+                for n in range(j - 1, j + 2):
+                    if k == i and j == n:
+                        continue
+                if self.is_D_correct(cells, i, j):
+                    cells[i, j].payoffs[m] = self.payoff_D_C
+                    cells[i, j].sum_payoff += self.payoff_D_C
+                else:
+                    cells[i, j].payoffs[m] = self.payoff_D_D
+                    cells[i, j].sum_payoff += self.payoff_D_D
+                m += 1
+        elif cells[i, j].state == 1:
+            for k in range(i - 1, i + 2):
+                for n in range(j - 1, j + 2):
+                    if k == i and j == n:
+                        continue
+                if self.is_C_correct(cells, i, j):
+                    cells[i, j].payoffs[m] = self.payoff_C_C
+                    cells[i, j].sum_payoff += self.payoff_C_C
+                else:
+                    cells[i, j].payoffs[m] = self.payoff_C_D
+                    cells[i, j].sum_payoff += self.payoff_C_D
+                m += 1
+        cells[i, j].avg_payoff = cells[i, j].sum_payoff / 8
+
 
     def is_group_of_0s(self, cells, i, j):
         if cells[i, j].state == 0:
