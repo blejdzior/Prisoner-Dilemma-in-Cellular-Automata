@@ -16,16 +16,16 @@ from GUI.ui_mainwindow import Ui_MainWindow
 from PySide6.QtGui import (QBrush, QGradient, QRadialGradient)
 
 
-from data.canvas import Canvas
-from data.competition import Competition
-from data.debugger import Debugger
-from data.iterations import Iterations
-from data.mutation import Mutation
-from data.myData import MyData
-from data.seed import Seed
-from data.strategies import Strategies
-from data.synch import Synch
-from data.payoff import Payoff
+from DATA.canvas import Canvas
+from DATA.competition import Competition
+from DATA.debugger import Debugger
+from DATA.iterations import Iterations
+from DATA.mutation import Mutation
+from DATA.myData import MyData
+from DATA.seed import Seed
+from DATA.strategies import Strategies
+from DATA.synch import Synch
+from DATA.payoff import Payoff
 
 from algorithm.CA import CA
 from GUI.animation import Animation
