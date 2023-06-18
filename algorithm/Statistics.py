@@ -58,6 +58,9 @@ class Statistics:
     
     def get_f_strat_ch(self):
         return self.f_strat_ch
+    
+    def get_f_strat_ch_final(self):
+        return self.f_strat_ch_final
 
 
     def write_stats_to_file_a(self, f):

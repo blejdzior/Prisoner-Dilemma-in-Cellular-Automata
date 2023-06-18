@@ -761,10 +761,11 @@ class MainWindow(QMainWindow):
                 f_C = statistics.get_f_C()
                 f_C_corr = statistics.get_f_C_corr()
                 f_strat_ch = statistics.get_f_strat_ch()
+                f_strat_ch_final = statistics.get_f_strat_ch_final()
                 break
             
         avg_payoff = self.automata.get_avg_payoff(iter)
-        self.gnuplot.updateCanvas(f_C, f_C_corr, avg_payoff[1], f_strat_ch)
+        self.gnuplot.updateCanvas(f_C, f_C_corr, avg_payoff[1], f_strat_ch, f_strat_ch_final)
 
     def simulationDoneMessage(self):
         msg = QMessageBox()
