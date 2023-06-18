@@ -80,7 +80,6 @@ class CA:
         self.evolution()
         self.statistics = self.calculate_statistics()
 
-
     def get_avg_payoff(self, iter):
         return self.avg_payoff[iter]
 
@@ -178,9 +177,9 @@ class CA:
             for i in range(1, self.M_rows - 1):
                 for j in range(1, self.N_cols - 1):
                     self.f.write("{0:<5}{1:<5}{2:<5}{3:<5}".format(cells[i - 1, j].id, cells[i - 1, j + 1].id,
-                                                               cells[i, j + 1].id, cells[i + 1, j + 1].id))
+                                                                   cells[i, j + 1].id, cells[i + 1, j + 1].id))
                     self.f.write("{0:<5}{1:<5}{2:<5}{3:<5}".format(cells[i + 1, j].id, cells[i + 1, j - 1].id,
-                                                               cells[i, j - 1].id, cells[i - 1, j - 1].id))
+                                                                   cells[i, j - 1].id, cells[i - 1, j - 1].id))
                     self.f.write("\n")
 
             self.f.write("\nkD:\n")
@@ -197,9 +196,6 @@ class CA:
             self.f.write("0 1 1 1 1 1 1 1 1\n0 0 1 1 1 1 1 1 1\n0 0 0 1 1 1 1 1 1\n0 0 0 0 1 1 1 1 1\n")
             self.f.write("0 0 0 0 0 1 1 1 1\n0 0 0 0 0 0 1 1 1\n0 0 0 0 0 0 0 1 1\n0 0 0 0 0 0 0 0 1\n")
             self.f.write("0 0 0 0 0 0 0 0 0\n")
-
-
-
 
         return cells
 
@@ -282,7 +278,7 @@ class CA:
                         self.f.write("{0:2}{1:2}{2:2}{3:2}".format(cells[i - 1, j].state, cells[i - 1, j + 1].state,
                                                                    cells[i, j + 1].state, cells[i + 1, j + 1].state))
                         self.f.write("{0:2}{1:2}{2:2}{3:2}\n".format(cells[i + 1, j].state, cells[i + 1, j - 1].state,
-                                                                   cells[i, j - 1].state, cells[i - 1, j - 1].state))
+                                                                     cells[i, j - 1].state, cells[i - 1, j - 1].state))
                     # decide whether cell will be changing strategy in this iteration with synch_prob probability
                     self.is_cell_changing_strategy(cells[i, j])
             if self.is_test1:
@@ -315,7 +311,10 @@ class CA:
                     if self.is_payoff_1:
                         self.calculate_payoff_1(cells, i, j)
                     else:
+                        if self.is_test1 and self.is_debug:
+                            self.f.write("PLAY_GAME_2\n")
                         self.calculate_payoff_2(cells, i, j)
+
                     sum_payoff_temp += cells[i, j].avg_payoff
 
             avg_payoff_temp = sum_payoff_temp / ((self.M_rows - 2) * (self.N_cols - 2))
@@ -325,10 +324,12 @@ class CA:
                 self.f.write("\nPayoffs:\n")
                 for i in range(1, self.M_rows - 1):
                     for j in range(1, self.N_cols - 1):
-                        self.f.write("{0:5.1f}{1:5.1f}{2:5.1f}{3:5.1f}".format(cells[i, j].payoffs[1], cells[i, j].payoffs[2],
-                                                                   cells[i, j].payoffs[4], cells[i, j].payoffs[7]))
-                        self.f.write("{0:5.1f}{1:5.1f}{2:5.1f}{3:5.1f}\n".format(cells[i, j].payoffs[6], cells[i, j].payoffs[5],
-                                                                     cells[i, j].payoffs[3], cells[i, j].payoffs[0]))
+                        self.f.write(
+                            "{0:5.1f}{1:5.1f}{2:5.1f}{3:5.1f}".format(cells[i, j].payoffs[1], cells[i, j].payoffs[2],
+                                                                      cells[i, j].payoffs[4], cells[i, j].payoffs[7]))
+                        self.f.write(
+                            "{0:5.1f}{1:5.1f}{2:5.1f}{3:5.1f}\n".format(cells[i, j].payoffs[6], cells[i, j].payoffs[5],
+                                                                        cells[i, j].payoffs[3], cells[i, j].payoffs[0]))
                 if not self.is_sharing:
                     self.f.write("\nCumul_payoffs:\n")
                     for i in range(1, self.M_rows - 1):
@@ -340,8 +341,6 @@ class CA:
                         for j in range(1, self.N_cols - 1):
                             self.f.write("{0:<5.4f}\n".format(cells[i, j].avg_payoff))
                     self.f.write("\nav_pay = {0:<5.4f}\n".format(avg_payoff_temp))
-
-
 
             # copy cells to new array to change strategies and states
             cells_temp = copy.deepcopy(cells)
@@ -361,10 +360,12 @@ class CA:
                 self.f.write("\nPayoffs after redistribution:\n")
                 for i in range(1, self.M_rows - 1):
                     for j in range(1, self.N_cols - 1):
-                        self.f.write("{0:5.1f}{1:5.1f}{2:5.1f}{3:5.1f}".format(cells[i, j].payoffs[1], cells[i, j].payoffs[2],
-                                                                   cells[i, j].payoffs[4], cells[i, j].payoffs[7]))
-                        self.f.write("{0:5.1f}{1:5.1f}{2:5.1f}{3:5.1f}\n".format(cells[i, j].payoffs[6], cells[i, j].payoffs[5],
-                                                                     cells[i, j].payoffs[3], cells[i, j].payoffs[0]))
+                        self.f.write(
+                            "{0:5.1f}{1:5.1f}{2:5.1f}{3:5.1f}".format(cells[i, j].payoffs[1], cells[i, j].payoffs[2],
+                                                                      cells[i, j].payoffs[4], cells[i, j].payoffs[7]))
+                        self.f.write(
+                            "{0:5.1f}{1:5.1f}{2:5.1f}{3:5.1f}\n".format(cells[i, j].payoffs[6], cells[i, j].payoffs[5],
+                                                                        cells[i, j].payoffs[3], cells[i, j].payoffs[0]))
 
                 self.f.write("\nCumul_payoffs:\n")
                 for i in range(1, self.M_rows - 1):
@@ -495,7 +496,6 @@ class CA:
                 self.misc_stats.append((k + 1, change_strat_count, change_strat_count_final))
                 self.cells.append((k + 1, cells_temp))
 
-
     # mutation of cell state by negating current state
     def mutate_state(self, cell):
         if cell.state == 0:
@@ -597,23 +597,58 @@ class CA:
         return False
 
     # roulette competition - neighbour with the highest payoff has the highest probability to win
-
     def roulette_competition(self, cells, cells_temp, i, j):
+        cells[i, j].winner_agent = -1
         payoffs = []
         sum_of_payoffs = 0
+        # print_41
+        if self.is_debug and self.is_test2:
+            self.f.write("\n\nCOMPETE ROULETTE:\n")
+            self.f.write("id={0:<10}\nmy_cum_payoff={1:<10.3f}\n".format(cells[i, j].id, cells[i, j].sum_payoff))
+            self.f.write("Neighbour_payoff\n")
+            self.f.write("{0:<6.3f}{1:<6.3f}{2:<6.3f}{3:<6.3f}".format(cells[i - 1, j].sum_payoff, cells[i - 1, j + 1].sum_payoff,
+                                                           cells[i, j + 1].sum_payoff, cells[i + 1, j + 1].sum_payoff))
+            self.f.write("{0:<6.3f}{1:<6.3f}{2:<6.3f}{3:<6.3f}\n".format(cells[i + 1, j].sum_payoff, cells[i + 1, j - 1].sum_payoff,
+                                                             cells[i, j - 1].sum_payoff,
+                                                             cells[i - 1, j - 1].sum_payoff))
+
         for k in range(i - 1, i + 2):
             for n in range(j - 1, j + 2):
                 payoffs.append((k, n, cells[k, n].sum_payoff))
                 sum_of_payoffs += cells[k, n].sum_payoff
+        if sum_of_payoffs == 0:
+            return False
         probabilities = [(k, n, payoff / sum_of_payoffs) for k, n, payoff in payoffs]
         probabilities_standardized = []
         sum_probabilities = 0
+        # print_42
+        if self.is_debug and self.is_test2:
+            self.f.write("SUM={0:<10.3f}\nselect_prob\n".format(sum_of_payoffs))
+            self.f.write(
+                "{0:<6.3f}{1:<6.3f}{2:<6.3f}{3:<6.3f}".format(probabilities[1][2], probabilities[2][2],
+                                                          probabilities[4][2], probabilities[7][2]))
+            self.f.write(
+                "{0:<6.3f}{1:<6.3f}{2:<6.3f}{3:<6.3f}\n".format(probabilities[6][2], probabilities[5][2],
+                                                            probabilities[3][2], probabilities[0][2]))
         for k, n, probability in probabilities:
+            if probability == 0:
+                continue
             sum_probabilities += probability
             probabilities_standardized.append((k, n, sum_probabilities))
+        # print_43
+        if self.is_debug and self.is_test2:
+            self.f.write("roulette\n")
+            for k, n, probability in probabilities_standardized:
+                self.f.write("{0:<6.3f}".format(probability))
+            self.f.write("\n")
         x = random.random()
         for k, n, probability in probabilities_standardized:
             if x <= probability:
+                cells[i, j].winner_agent = cells[k, n].id
+                if self.is_debug and self.is_test2:
+                    self.f.write("Losowanie\n")
+                    self.f.write("x={0:<10.3f}\n".format(x))
+                    self.f.write("win_ID={0:<10}\n".format(cells[i, j].winner_agent))
                 if k != i or n != j:
                     cells_temp[i, j].strategy = cells[k, n].strategy
                     cells_temp[i, j].k = cells[k, n].k
@@ -621,13 +656,13 @@ class CA:
                 return False
 
     def redistribute_payoff(self, cells, cells_temp, i, j):
-        cells[i, j].pay_to_send = cells_temp[i, j].avg_payoff/9
+        cells[i, j].pay_to_send = cells_temp[i, j].avg_payoff / 9
         cells[i, j].pay_to_receive = 0.0
         for k in range(i - 1, i + 2):
             for n in range(j - 1, j + 2):
                 if k == i and j == n:
                     continue
-                cells[i, j].pay_to_receive += cells_temp[k, n].avg_payoff/9
+                cells[i, j].pay_to_receive += cells_temp[k, n].avg_payoff / 9
         cells[i, j].avg_payoff = cells[i, j].pay_to_send + cells[i, j].pay_to_receive
         for k in range(8):
             cells[i, j].payoffs[k] = cells[i, j].avg_payoff
@@ -671,27 +706,26 @@ class CA:
                 for n in range(j - 1, j + 2):
                     if k == i and j == n:
                         continue
-                if self.is_D_correct(cells, i, j):
-                    cells[i, j].payoffs[m] = self.payoff_D_C
-                    cells[i, j].sum_payoff += self.payoff_D_C
-                else:
-                    cells[i, j].payoffs[m] = self.payoff_D_D
-                    cells[i, j].sum_payoff += self.payoff_D_D
-                m += 1
+                    if self.is_D_correct(cells, i, j):
+                        cells[i, j].payoffs[m] = self.payoff_D_C
+                        cells[i, j].sum_payoff += self.payoff_D_C
+                    else:
+                        cells[i, j].payoffs[m] = self.payoff_D_D
+                        cells[i, j].sum_payoff += self.payoff_D_D
+                    m += 1
         elif cells[i, j].state == 1:
             for k in range(i - 1, i + 2):
                 for n in range(j - 1, j + 2):
                     if k == i and j == n:
                         continue
-                if self.is_C_correct(cells, i, j):
-                    cells[i, j].payoffs[m] = self.payoff_C_C
-                    cells[i, j].sum_payoff += self.payoff_C_C
-                else:
-                    cells[i, j].payoffs[m] = self.payoff_C_D
-                    cells[i, j].sum_payoff += self.payoff_C_D
-                m += 1
+                    if self.is_C_correct(cells, i, j):
+                        cells[i, j].payoffs[m] = self.payoff_C_C
+                        cells[i, j].sum_payoff += self.payoff_C_C
+                    else:
+                        cells[i, j].payoffs[m] = self.payoff_C_D
+                        cells[i, j].sum_payoff += self.payoff_C_D
+                    m += 1
         cells[i, j].avg_payoff = cells[i, j].sum_payoff / 8
-
 
     def is_group_of_0s(self, cells, i, j):
         if cells[i, j].state == 0:
@@ -924,8 +958,8 @@ class CA:
             optim_solut = self.optimal_num_1s / ((self.M_rows - 2) * (self.N_cols - 2))
             # save stats as list of Statistics class instances
             statistics.append(Statistics(k, f_C, f_C_corr, av_sum, f_allC, f_allD, f_kD, f_kC,
-                                          f_kDC, f_strat_ch, f_0D, f_1D, f_2D, f_3D, f_4D, f_5D, f_6D,
-                                          f_7D, f_8D, f_0C, f_1C, f_2C, f_3C, f_4C, f_5C, f_6C, f_7C, f_8C,
-                                          f_0DC, f_1DC, f_2DC, f_3DC, f_4DC, f_5DC, f_6DC, f_7DC, f_8DC,
-                                          f_strat_ch_final, f_cr_0s, f_cr_1s, optim_solut))
+                                         f_kDC, f_strat_ch, f_0D, f_1D, f_2D, f_3D, f_4D, f_5D, f_6D,
+                                         f_7D, f_8D, f_0C, f_1C, f_2C, f_3C, f_4C, f_5C, f_6C, f_7C, f_8C,
+                                         f_0DC, f_1DC, f_2DC, f_3DC, f_4DC, f_5DC, f_6DC, f_7DC, f_8DC,
+                                         f_strat_ch_final, f_cr_0s, f_cr_1s, optim_solut))
         return statistics
