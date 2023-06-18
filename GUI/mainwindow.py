@@ -716,9 +716,24 @@ class MainWindow(QMainWindow):
     def pause_animation(self):
         self.animation.stop()
         self.enableStartButton()
+
     def isRunning_false(self):
         self.isAnimationRunning = False
         self.enableStartButton()
+
+    def calculateSleepTime(self):
+        rows = self.data.canvas.rows
+        cols = self.data.canvas.cols
+        cells = rows * cols
+        if cells < 5000:
+            return 0.2
+        elif cells < 7000:
+            return 0.5
+        elif cells < 9000:
+            return 0.8
+        else:
+            return 1.0
+
 
     # create a new seperate thread for simulation
     def start_animation_thread(self):
@@ -730,6 +745,8 @@ class MainWindow(QMainWindow):
             numOfIters = self.iterations.num_of_iter
             self.animation.numofIters = numOfIters
             self.animation.iter = 0
+            time = self.calculateSleepTime()
+            self.animation.setSleepTime(time)
             self.animation_thread.start()
             self.anim_start_signal.emit()
 
