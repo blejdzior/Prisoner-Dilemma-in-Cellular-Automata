@@ -169,7 +169,7 @@ class CA:
             self.f.write("\nAgent_i_j_ID:\n")
             for i in range(1, self.M_rows - 1):
                 for j in range(1, self.N_cols - 1):
-                    self.f.write("{0:<5}{1:<5}".format(cells[i, j].x, cells[i, j].y))
+                    self.f.write("{0:<5}{1:<5}".format(cells[i, j].y, cells[i, j].x))
                     self.f.write("\n")
 
             # print agent neighbours
@@ -275,6 +275,7 @@ class CA:
                     if self.is_test1:
                         self.f.write("\nid={0:<3}\n".format(cells[i, j].id))
                         self.f.write("My_neighb_states:\n")
+                        self.f.write("{0:2}".format(cells[i, j].state))
                         self.f.write("{0:2}{1:2}{2:2}{3:2}".format(cells[i - 1, j].state, cells[i - 1, j + 1].state,
                                                                    cells[i, j + 1].state, cells[i + 1, j + 1].state))
                         self.f.write("{0:2}{1:2}{2:2}{3:2}\n".format(cells[i + 1, j].state, cells[i + 1, j - 1].state,
@@ -568,6 +569,15 @@ class CA:
     def tournament_competition(self, cells, cells_temp, i, j):
         cells[i, j].winner_agent = -1
         max_payoff = (i, j, cells[i, j].sum_payoff)
+        if self.is_debug and self.is_test2:
+            self.f.write("\n\nCOMPETE TOURNAMENT:\n")
+            self.f.write("id={0:<10}\nmy_cum_payoff={1:<10.3f}\n".format(cells[i, j].id, cells[i, j].sum_payoff))
+            self.f.write("Neighbour_payoff\n")
+            self.f.write("{0:<6.3f}{1:<6.3f}{2:<6.3f}{3:<6.3f}".format(cells[i - 1, j].sum_payoff, cells[i - 1, j + 1].sum_payoff,
+                                                           cells[i, j + 1].sum_payoff, cells[i + 1, j + 1].sum_payoff))
+            self.f.write("{0:<6.3f}{1:<6.3f}{2:<6.3f}{3:<6.3f}\n".format(cells[i + 1, j].sum_payoff, cells[i + 1, j - 1].sum_payoff,
+                                                             cells[i, j - 1].sum_payoff,
+                                                             cells[i - 1, j - 1].sum_payoff))
 
         if max_payoff[2] < cells[i - 1, j].sum_payoff:
             max_payoff = (i - 1, j, cells[i - 1, j].sum_payoff)

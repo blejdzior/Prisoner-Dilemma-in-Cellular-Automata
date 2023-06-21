@@ -29,7 +29,7 @@ class Cell(QTableWidgetItem):
         # coordinates in cellular automata
         self.x = x
         self.y = y
-        # global ID 
+        # global ID
         self.id = _id
 
         self.group_of_1s = group_of_1s
