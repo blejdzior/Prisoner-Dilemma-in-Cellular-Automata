@@ -479,21 +479,25 @@ class CA:
                             self.f.write("{0:<2}".format(cells_temp[i, j].state))
                         self.f.write("\n")
 
-                # mutation when cell is in group od 1s or group of 0s
-                # (shouldn't it be done earlier?)
                 for i in range(1, self.M_rows - 1):
                     for j in range(1, self.N_cols - 1):
                         cells_temp[i, j].group_of_1s = self.is_group_of_1s(cells_temp, i, j)
                         if not cells_temp[i, j].group_of_1s:
                             cells_temp[i, j].group_of_0s = self.is_group_of_0s(cells_temp, i, j)
+                # mutation when cell is in group od 1s or group of 0s
+                # (shouldn't it be done earlier?)
+                for i in range(1, self.M_rows - 1):
+                    for j in range(1, self.N_cols - 1):
                         if cells_temp[i, j].group_of_0s:
-                            x = random.random()
-                            if x <= self.p_neigh_0_mut:
-                                cells_temp[i, j].state = 1
+                            if self.p_neigh_0_mut != 0:
+                                x = random.random()
+                                if x <= self.p_neigh_0_mut:
+                                    cells_temp[i, j].state = 1
                         elif cells_temp[i, j].group_of_1s:
-                            x = random.random()
-                            if x <= self.p_neigh_1_mut:
-                                cells_temp[i, j].state = 0
+                            if self.p_neigh_1_mut != 0:
+                                x = random.random()
+                                if x <= self.p_neigh_1_mut:
+                                    cells_temp[i, j].state = 0
                 self.misc_stats.append((k + 1, change_strat_count, change_strat_count_final))
                 self.cells.append((k + 1, cells_temp))
 
@@ -596,8 +600,8 @@ class CA:
 
         if max_payoff[2] < cells[i, j - 1].sum_payoff:
             max_payoff = (i, j - 1, cells[i, j - 1].sum_payoff)
-        if max_payoff[2] < cells[i + 1, j - 1].sum_payoff:
-            max_payoff = (i + 1, j - 1, cells[i + 1, j - 1].sum_payoff)
+        if max_payoff[2] < cells[i - 1, j - 1].sum_payoff:
+            max_payoff = (i - 1, j - 1, cells[i - 1, j - 1].sum_payoff)
         k, n, payoff = max_payoff
         cells[i, j].winner_agent = cells[k, n].id
         if k != i or n != j:
@@ -707,7 +711,9 @@ class CA:
                         cells[i, j].payoffs[m] = self.payoff_C_D
                         cells[i, j].sum_payoff += self.payoff_C_D
                     m += 1
-        cells[i, j].avg_payoff = cells[i, j].sum_payoff / 8
+        cells[i, j].sum_payoff = round(cells[i, j].sum_payoff, 4)
+        cells[i, j].avg_payoff = cells[i, j].sum_payoff / 8.0
+        cells[i, j].avg_payoff = round(cells[i, j].avg_payoff, 4)
 
     def calculate_payoff_2(self, cells, i, j):
         m = 0
