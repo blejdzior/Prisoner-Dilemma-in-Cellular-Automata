@@ -11,5 +11,5 @@ plot 'results_b.txt' using 1:20 with lines lt 4 lw 3 title "f 0DC",\
 'results_b.txt' using 1:24 with lines lt rgb "green" lw 3 title "f 4DC",\
 'results_b.txt' using 1:25 with lines lt rgb "violet" lw 3 title "f 5DC",\
 'results_b.txt' using 1:26 with lines lt rgb "cyan" lw 3 title "f 6DC",\
-'results_b.txt' using 1:27 with lines lt rgb "pink" lw 3 title "f 7DC",\
-'results_b.txt' using 1:28 with lines lt rgb "dark-orange" lw 3 title "f 8DC"
+'results_b.txt' using 1:27 with lines lt rgb "dark-orange" lw 3 title "f 7DC",\
+'results_b.txt' using 1:28 with lines lt rgb "pink" lw 3 title "f 8DC"
