@@ -8,24 +8,16 @@
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
 
-from PySide6.QtCore import (QCoreApplication, QDate, QDateTime, QLocale,
-    QMetaObject, QObject, QPoint, QRect,
-    QSize, QTime, QUrl, Qt)
-from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
-    QFont, QFontDatabase, QGradient, QIcon,
-    QImage, QKeySequence, QLinearGradient, QPainter,
-    QPalette, QPixmap, QRadialGradient, QTransform)
-from PySide6.QtWidgets import (QApplication, QButtonGroup, QCheckBox, QDoubleSpinBox,
+from PySide6.QtCore import (QCoreApplication, QMetaObject, QRect)
+from PySide6.QtWidgets import (QButtonGroup, QCheckBox, QDoubleSpinBox,
     QFrame, QGraphicsView, QTableWidget, QGroupBox, QLCDNumber,
-    QLabel, QMainWindow, QMenuBar, QPushButton,
-    QRadioButton, QSizePolicy, QSpinBox, QStatusBar,
-    QWidget, QAbstractItemView, QMessageBox)
+    QLabel, QMenuBar, QPushButton, QRadioButton, QSpinBox, QStatusBar,
+    QWidget, QAbstractItemView)
 
 class Ui_MainWindow(object):
 
     def disableStartButton(self):
-        print("Disable start button!")
-        # self.pushButton_start.setEnabled(False)    
+        self.pushButton_start.setEnabled(False)   
 
     def setupUi(self, MainWindow):
         if not MainWindow.objectName():
@@ -42,7 +34,6 @@ class Ui_MainWindow(object):
         self.graphicsView_CA.setSelectionMode(QAbstractItemView.SingleSelection)
         self.graphicsView_CA.verticalHeader().setMinimumSectionSize(1)
         self.graphicsView_CA.setEditTriggers(QAbstractItemView.NoEditTriggers)
-        # self.graphicsView_CA.setDisabled(1)
         
         self.pushButton_states = QPushButton(self.centralwidget)
         self.pushButton_states.setObjectName(u"pushButton_states")
@@ -73,6 +64,7 @@ class Ui_MainWindow(object):
         self.pushButton_actions = QPushButton(self.centralwidget)
         self.pushButton_actions.setObjectName(u"pushButton_actions")
         self.pushButton_actions.setGeometry(QRect(830, 20, 80, 24))
+        self.pushButton_actions.clicked.connect(MainWindow.action_color_handler)
         
         # disabling buttons before simulation has started
         self.pushButton_states.setDisabled(1)
@@ -91,6 +83,7 @@ class Ui_MainWindow(object):
         self.spinBox_Ncols.setObjectName(u"spinBox_Ncols")
         self.spinBox_Ncols.setGeometry(QRect(60, 60, 61, 25))
         self.spinBox_Ncols.setValue(51)
+        self.spinBox_Ncols.setMaximum(999)
         self.doubleSpinBox_p_init_C = QDoubleSpinBox(self.groupBox_simul)
         self.doubleSpinBox_p_init_C.setObjectName(u"doubleSpinBox_p_init_C")
         self.doubleSpinBox_p_init_C.setGeometry(QRect(60, 90, 62, 25))
@@ -107,6 +100,7 @@ class Ui_MainWindow(object):
         self.spinBox_Mrows.setObjectName(u"spinBox_Mrows")
         self.spinBox_Mrows.setGeometry(QRect(60, 30, 61, 25))
         self.spinBox_Mrows.setValue(51)
+        self.spinBox_Mrows.setMaximum(999)
         self.label_22 = QLabel(self.groupBox_simul)
         self.label_22.setObjectName(u"label_22")
         self.label_22.setGeometry(QRect(10, 60, 51, 21))
@@ -136,13 +130,15 @@ class Ui_MainWindow(object):
         self.doubleSpinBox_p_state_mut.setObjectName(u"doubleSpinBox_p_state_mut")
         self.doubleSpinBox_p_state_mut.setGeometry(QRect(100, 30, 62, 25))
         self.doubleSpinBox_p_state_mut.setMaximum(1.000000000000000)
-        self.doubleSpinBox_p_state_mut.setSingleStep(0.100000000000000)
+        self.doubleSpinBox_p_state_mut.setSingleStep(0.0001)
+        self.doubleSpinBox_p_state_mut.setDecimals(4)
         self.doubleSpinBox_p_0_neigh_mut = QDoubleSpinBox(self.groupBox_mutation)
         self.doubleSpinBox_p_0_neigh_mut.setObjectName(u"doubleSpinBox_p_0_neigh_mut")
         self.doubleSpinBox_p_0_neigh_mut.setGeometry(QRect(100, 90, 62, 25))
         self.doubleSpinBox_p_0_neigh_mut.setMaximum(1.000000000000000)
-        self.doubleSpinBox_p_0_neigh_mut.setSingleStep(0.100000000000000)
+        self.doubleSpinBox_p_0_neigh_mut.setSingleStep(0.0001)
         self.doubleSpinBox_p_0_neigh_mut.setValue(0.300000000000000)
+        self.doubleSpinBox_p_0_neigh_mut.setDecimals(4)
         self.label_16 = QLabel(self.groupBox_mutation)
         self.label_16.setObjectName(u"label_16")
         self.label_16.setGeometry(QRect(10, 30, 71, 21))
@@ -156,8 +152,9 @@ class Ui_MainWindow(object):
         self.doubleSpinBox_p_1_neigh_mut.setObjectName(u"doubleSpinBox_p_1_neigh_mut")
         self.doubleSpinBox_p_1_neigh_mut.setGeometry(QRect(100, 120, 62, 25))
         self.doubleSpinBox_p_1_neigh_mut.setMaximum(1.000000000000000)
-        self.doubleSpinBox_p_1_neigh_mut.setSingleStep(0.100000000000000)
+        self.doubleSpinBox_p_1_neigh_mut.setSingleStep(0.0001)
         self.doubleSpinBox_p_1_neigh_mut.setValue(0.100000000000000)
+        self.doubleSpinBox_p_1_neigh_mut.setDecimals(4)
         self.label_18 = QLabel(self.groupBox_mutation)
         self.label_18.setObjectName(u"label_18")
         self.label_18.setGeometry(QRect(10, 90, 91, 21))
@@ -165,7 +162,8 @@ class Ui_MainWindow(object):
         self.doubleSpinBox_p_strat_mut.setObjectName(u"doubleSpinBox_p_strat_mut")
         self.doubleSpinBox_p_strat_mut.setGeometry(QRect(100, 60, 62, 25))
         self.doubleSpinBox_p_strat_mut.setMaximum(1.000000000000000)
-        self.doubleSpinBox_p_strat_mut.setSingleStep(0.100000000000000)
+        self.doubleSpinBox_p_strat_mut.setSingleStep(0.0001)
+        self.doubleSpinBox_p_strat_mut.setDecimals(4)
         self.groupBox_strategies = QGroupBox(self.groupBox_simul)
         self.groupBox_strategies.setObjectName(u"groupBox_strategies")
         self.groupBox_strategies.setGeometry(QRect(200, 20, 151, 241))
@@ -275,27 +273,27 @@ class Ui_MainWindow(object):
         self.groupBox_debug.setObjectName(u"groupBox_debug")
         self.groupBox_debug.setEnabled(False)
         self.groupBox_debug.setGeometry(QRect(10, 440, 171, 61))
-        self.radioButton_CA_state = QRadioButton(self.groupBox_debug)
+        self.radioButton_CA_state = QCheckBox(self.groupBox_debug)
         self.radioButton_CA_state.setObjectName(u"radioButton_CA_state")
         self.radioButton_CA_state.setGeometry(QRect(10, 10, 141, 22))
-        self.radioButton_CA_strat = QRadioButton(self.groupBox_debug)
+        self.radioButton_CA_strat = QCheckBox(self.groupBox_debug)
         self.radioButton_CA_strat.setObjectName(u"radioButton_CA_strat")
         self.radioButton_CA_strat.setGeometry(QRect(10, 30, 121, 22))
-        self.radioButton_debug = QRadioButton(self.groupBox_simul)
+        self.radioButton_debug = QCheckBox(self.groupBox_simul)
         self.radioButton_debug.setObjectName(u"radioButton_debug")
         self.radioButton_debug.setGeometry(QRect(10, 420, 82, 22))
-        self.radioButton_test1 = QRadioButton(self.groupBox_simul)
-        self.buttonGroup = QButtonGroup(MainWindow)
-        self.buttonGroup.setObjectName(u"buttonGroup")
-        self.buttonGroup.addButton(self.radioButton_test1)
+        self.radioButton_test1 = QCheckBox(self.groupBox_simul)
+        # self.buttonGroup = QButtonGroup(MainWindow)
+        # self.buttonGroup.setObjectName(u"buttonGroup")
+        # self.buttonGroup.addButton(self.radioButton_test1)
         self.radioButton_test1.setObjectName(u"radioButton_test1")
         self.radioButton_test1.setGeometry(QRect(200, 410, 91, 22))
-        self.radioButton_test2 = QRadioButton(self.groupBox_simul)
-        self.buttonGroup.addButton(self.radioButton_test2)
+        self.radioButton_test2 = QCheckBox(self.groupBox_simul)
+        # self.buttonGroup.addButton(self.radioButton_test2)
         self.radioButton_test2.setObjectName(u"radioButton_test2")
         self.radioButton_test2.setGeometry(QRect(200, 430, 91, 21))
-        self.radioButton_test3 = QRadioButton(self.groupBox_simul)
-        self.buttonGroup.addButton(self.radioButton_test3)
+        self.radioButton_test3 = QCheckBox(self.groupBox_simul)
+        # self.buttonGroup.addButton(self.radioButton_test3)
         self.radioButton_test3.setObjectName(u"radioButton_test3")
         self.radioButton_test3.setGeometry(QRect(200, 450, 91, 22))
         self.spinBox_optimal_num_1s = QSpinBox(self.groupBox_simul)
@@ -309,9 +307,19 @@ class Ui_MainWindow(object):
         self.label_2 = QLabel(self.centralwidget)
         self.label_2.setObjectName(u"label_2")
         self.label_2.setGeometry(QRect(110, 530, 81, 16))
+        self.radiobutton_pay_fun_1 = QRadioButton(self.centralwidget)
+        self.radiobutton_pay_fun_1.setObjectName(u"pay_fun_1")
+        self.radiobutton_pay_fun_1.setGeometry(QRect(240, 515, 81, 16))
+        self.radiobutton_pay_fun_1.setChecked(True)
+        self.radiobutton_pay_fun_2 = QRadioButton(self.centralwidget)
+        self.radiobutton_pay_fun_2.setObjectName(u"pay_fun_2")
+        self.radiobutton_pay_fun_2.setGeometry(QRect(240, 535, 81, 16))
         self.groupBox_payoff = QGroupBox(self.centralwidget)
         self.groupBox_payoff.setObjectName(u"groupBox_payoff")
         self.groupBox_payoff.setGeometry(QRect(50, 560, 181, 71))
+        self.button_group_payoff = QButtonGroup(self.centralwidget)
+        self.button_group_payoff.addButton(self.radiobutton_pay_fun_1)
+        self.button_group_payoff.addButton(self.radiobutton_pay_fun_2)
         self.label_3 = QLabel(self.groupBox_payoff)
         self.label_3.setObjectName(u"label_3")
         self.label_3.setGeometry(QRect(10, 10, 49, 20))
@@ -347,9 +355,11 @@ class Ui_MainWindow(object):
         self.label_15 = QLabel(self.centralwidget)
         self.label_15.setObjectName(u"label_15")
         self.label_15.setGeometry(QRect(490, 50, 49, 16))
+
         self.lcdNumber_iters = QLCDNumber(self.centralwidget)
         self.lcdNumber_iters.setObjectName(u"lcdNumber_iters")
         self.lcdNumber_iters.setGeometry(QRect(540, 50, 51, 21))
+
         self.label_27 = QLabel(self.centralwidget)
         self.label_27.setObjectName(u"label_27")
         self.label_27.setGeometry(QRect(90, 540, 49, 21))
@@ -371,6 +381,7 @@ class Ui_MainWindow(object):
         self.pushButton_start_anim = QPushButton(self.centralwidget)
         self.pushButton_start_anim.setObjectName(u"pushButton_start_anim")
         self.pushButton_start_anim.setGeometry(QRect(580, 400, 61, 21))
+        self.pushButton_start_anim.clicked.connect(MainWindow.start_animation_thread)
         self.spinBox_iters = QSpinBox(self.centralwidget)
         self.spinBox_iters.setObjectName(u"spinBox_iters")
         self.spinBox_iters.setGeometry(QRect(510, 400, 61, 25))
@@ -382,6 +393,7 @@ class Ui_MainWindow(object):
         self.pushButton_stop = QPushButton(self.centralwidget)
         self.pushButton_stop.setObjectName(u"pushButton_stop")
         self.pushButton_stop.setGeometry(QRect(650, 400, 61, 21))
+        self.pushButton_stop.clicked.connect(MainWindow.pause_animation)
         self.pushButton_save = QPushButton(self.centralwidget)
         self.pushButton_save.setObjectName(u"pushButton_save")
         self.pushButton_save.setGeometry(QRect(720, 400, 81, 21))
@@ -396,9 +408,9 @@ class Ui_MainWindow(object):
         self.line_2.setFrameShadow(QFrame.Sunken)
         self.pushButton_start = QPushButton(self.centralwidget)
         self.pushButton_start.setObjectName(u"pushButton_start")
-        self.pushButton_start.setGeometry(QRect(240, 540, 111, 91))
+        self.pushButton_start.setGeometry(QRect(240, 560, 111, 71))
         self.pushButton_start.clicked.connect(MainWindow.startSimulation)
-        self.pushButton_start.clicked.connect(self.disableStartButton)
+        self.pushButton_start.clicked.connect(MainWindow.create_graph)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QMenuBar(MainWindow)
         self.menubar.setObjectName(u"menubar")
@@ -434,8 +446,15 @@ class Ui_MainWindow(object):
         self.retranslateUi(MainWindow)
         self.radioButton_custom.toggled.connect(self.spinBox_custom_seed.setEnabled)
         self.radioButton_debug.toggled.connect(self.groupBox_debug.setEnabled)
-        self.spinBox_iters.valueChanged.connect(self.lcdNumber_iters.display)
+        self.radioButton_debug.toggled.connect(self.radioButton_debug.setChecked)
+        self.radioButton_debug.toggled.connect(self.radioButton_CA_state.setChecked)
+        self.radioButton_debug.toggled.connect(self.radioButton_CA_strat.setChecked)
+        self.radioButton_CA_state.setEnabled(False)
+        self.radioButton_CA_strat.setEnabled(False)
 
+
+        self.spinBox_iters.valueChanged.connect(self.lcdNumber_iters.display)
+        self.spinBox_iters.valueChanged.connect(MainWindow.change_iter_display)
         QMetaObject.connectSlotsByName(MainWindow)
     # setupUi
 
@@ -485,6 +504,8 @@ class Ui_MainWindow(object):
         self.radioButton_test3.setText(QCoreApplication.translate("MainWindow", u"test_3", None))
         self.label.setText(QCoreApplication.translate("MainWindow", u"Payoff function:", None))
         self.label_2.setText(QCoreApplication.translate("MainWindow", u"neighbour", None))
+        self.radiobutton_pay_fun_1.setText(QCoreApplication.translate("MainWindow", u"pay_fun_1", None))
+        self.radiobutton_pay_fun_2.setText(QCoreApplication.translate("MainWindow", u"pay_fun_2", None))
         self.groupBox_payoff.setTitle("")
         self.label_3.setText(QCoreApplication.translate("MainWindow", u"d:", None))
         self.label_4.setText(QCoreApplication.translate("MainWindow", u"b:", None))
