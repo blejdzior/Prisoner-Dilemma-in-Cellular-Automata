@@ -16,7 +16,7 @@ class CA:
     def __init__(self, M_rows, N_cols, p_init_C, allC, allD, kD, kC, minK, maxK, num_of_iter,
                  payoff_C_C, payoff_C_D, payoff_D_C, payoff_D_D, is_sharing, synch_prob,
                  is_tournament, p_state_mut, p_strat_mut, p_0_neigh_mut, p_1_neigh_mut, is_debug, is_test1, is_test2,
-                 f, optimal_num1s, is_payoff_1, seed=None):
+                 f, optimal_num1s, is_payoff_1, u, seed=None):
         # size of CA
         self.M_rows = M_rows
         self.N_cols = N_cols
@@ -65,10 +65,9 @@ class CA:
 
         # payoff func
         self.is_payoff_1 = is_payoff_1
-        if not self.is_payoff_1:
-            self.is_payoff_2 = True
-        else:
-            self.is_payoff_2 = False
+
+        # u parameter - defines after how many iterations competition is happening.
+        self.u = u
 
         # (iter, f_strat_ch, f_strat_ch_final)
         self.misc_stats = [(0, 0, 0)]
@@ -255,83 +254,122 @@ class CA:
 
     def evolution(self):
 
-        for k in range(0, self.num_of_iter):
-            sum_payoff_temp = 0
+        for k in range(0, self.num_of_iter, self.u):
+
             iter1, cells = self.cells[k]
             change_strat_count = 0
             change_strat_count_final = 0
             if self.is_test1:
                 self.f.write("\niter = " + str(k))
                 self.f.write("\nCALCULATE C*/D*\n")
-            # decide action
-            for i in range(1, self.M_rows - 1):
-                for j in range(1, self.N_cols - 1):
-                    if self.is_payoff_1:
-                        cells[i, j].action = self.decide_action(cells, i, j)
-                    if k == 0:
-                        cells[i, j].group_of_1s = self.is_group_of_1s(cells, i, j)
-                        if not cells[i, j].group_of_1s:
-                            cells[i, j].group_of_0s = self.is_group_of_0s(cells, i, j)
-                    if self.is_test1:
-                        self.f.write("\nid={0:<3}\n".format(cells[i, j].id))
-                        self.f.write("My_neighb_states:\n")
-                        self.f.write("{0:2}".format(cells[i, j].state))
-                        self.f.write("{0:2}{1:2}{2:2}{3:2}".format(cells[i - 1, j].state, cells[i - 1, j + 1].state,
-                                                                   cells[i, j + 1].state, cells[i + 1, j + 1].state))
-                        self.f.write("{0:2}{1:2}{2:2}{3:2}\n".format(cells[i + 1, j].state, cells[i + 1, j - 1].state,
-                                                                     cells[i, j - 1].state, cells[i - 1, j - 1].state))
-                    # decide whether cell will be changing strategy in this iteration with synch_prob probability
-                    self.is_cell_changing_strategy(cells[i, j])
-            if self.is_test1:
-                self.f.write("\nCA_actions:\n")
-                for i in range(self.M_rows):
-                    for j in range(self.N_cols):
-                        self.f.write("{0:<3}".format(cells[i, j].action))
-                    self.f.write("\n")
-                self.f.write("\nGroup_8_0s:\n")
+            u_ = 1
+            for u in range(self.u):
+                sum_payoff_temp = 0
+                # decide action
                 for i in range(1, self.M_rows - 1):
                     for j in range(1, self.N_cols - 1):
-                        if cells[i, j].group_of_0s:
-                            self.f.write("{0:<3}".format(1))
+                        if self.is_payoff_1:
+                            cells[i, j].action = self.decide_action(cells, i, j)
+                        if k == 0:
+                            cells[i, j].group_of_1s = self.is_group_of_1s(cells, i, j)
+                            if not cells[i, j].group_of_1s:
+                                cells[i, j].group_of_0s = self.is_group_of_0s(cells, i, j)
+                        if self.is_test1:
+                            self.f.write("\nid={0:<3}\n".format(cells[i, j].id))
+                            self.f.write("My_neighb_states:\n")
+                            self.f.write("{0:2}".format(cells[i, j].state))
+                            self.f.write("{0:2}{1:2}{2:2}{3:2}".format(cells[i - 1, j].state, cells[i - 1, j + 1].state,
+                                                                       cells[i, j + 1].state, cells[i + 1, j + 1].state))
+                            self.f.write("{0:2}{1:2}{2:2}{3:2}\n".format(cells[i + 1, j].state, cells[i + 1, j - 1].state,
+                                                                         cells[i, j - 1].state, cells[i - 1, j - 1].state))
+                        # decide whether cell will be changing strategy in this iteration with synch_prob probability
+                        self.is_cell_changing_strategy(cells[i, j])
+                if self.is_test1:
+                    self.f.write("\nCA_actions:\n")
+                    for i in range(self.M_rows):
+                        for j in range(self.N_cols):
+                            self.f.write("{0:<3}".format(cells[i, j].action))
+                        self.f.write("\n")
+                    self.f.write("\nGroup_8_0s:\n")
+                    for i in range(1, self.M_rows - 1):
+                        for j in range(1, self.N_cols - 1):
+                            if cells[i, j].group_of_0s:
+                                self.f.write("{0:<3}".format(1))
+                            else:
+                                self.f.write("{0:<3}".format(0))
+                        self.f.write("\n")
+
+                    self.f.write("\nGroup_8_1s:\n")
+                    for i in range(1, self.M_rows - 1):
+                        for j in range(1, self.N_cols - 1):
+                            if cells[i, j].group_of_1s:
+                                self.f.write("{0:<3}".format(1))
+                            else:
+                                self.f.write("{0:<3}".format(0))
+                        self.f.write("\n")
+
+                # calculate payoffs
+                for i in range(1, self.M_rows - 1):
+                    for j in range(1, self.N_cols - 1):
+                        if self.is_payoff_1:
+                            self.calculate_payoff_1(cells, i, j)
                         else:
-                            self.f.write("{0:<3}".format(0))
-                    self.f.write("\n")
+                            if self.is_test1 and self.is_debug:
+                                self.f.write("PLAY_GAME_2\n")
+                            self.calculate_payoff_2(cells, i, j)
 
-                self.f.write("\nGroup_8_1s:\n")
-                for i in range(1, self.M_rows - 1):
-                    for j in range(1, self.N_cols - 1):
-                        if cells[i, j].group_of_1s:
-                            self.f.write("{0:<3}".format(1))
-                        else:
-                            self.f.write("{0:<3}".format(0))
-                    self.f.write("\n")
+                        sum_payoff_temp += cells[i, j].avg_payoff
 
-            # calculate payoffs
-            for i in range(1, self.M_rows - 1):
-                for j in range(1, self.N_cols - 1):
-                    if self.is_payoff_1:
-                        self.calculate_payoff_1(cells, i, j)
-                    else:
-                        if self.is_test1 and self.is_debug:
-                            self.f.write("PLAY_GAME_2\n")
-                        self.calculate_payoff_2(cells, i, j)
 
-                    sum_payoff_temp += cells[i, j].avg_payoff
+                if self.is_test1:
+                    # print payoffs
+                    avg_payoff_temp = sum_payoff_temp / ((self.M_rows - 2) * (self.N_cols - 2))
+                    self.f.write("\nPayoffs:\n")
+                    for i in range(1, self.M_rows - 1):
+                        for j in range(1, self.N_cols - 1):
+                            self.f.write(
+                                "{0:5.1f}{1:5.1f}{2:5.1f}{3:5.1f}".format(cells[i, j].payoffs[1], cells[i, j].payoffs[2],
+                                                                          cells[i, j].payoffs[4], cells[i, j].payoffs[7]))
+                            self.f.write(
+                                "{0:5.1f}{1:5.1f}{2:5.1f}{3:5.1f}\n".format(cells[i, j].payoffs[6], cells[i, j].payoffs[5],
+                                                                            cells[i, j].payoffs[3], cells[i, j].payoffs[0]))
+                    if not self.is_sharing:
+                        self.f.write("\nCumul_payoffs:\n")
+                        for i in range(1, self.M_rows - 1):
+                            for j in range(1, self.N_cols - 1):
+                                self.f.write("{0:<5.1f}\n".format(cells[i, j].sum_payoff))
 
-            avg_payoff_temp = sum_payoff_temp / ((self.M_rows - 2) * (self.N_cols - 2))
+                        self.f.write("\nCumul_avg:\n")
+                        for i in range(1, self.M_rows - 1):
+                            for j in range(1, self.N_cols - 1):
+                                self.f.write("{0:<5.4f}\n".format(cells[i, j].avg_payoff))
+                        self.f.write("\nav_pay = {0:<5.4f}\n".format(avg_payoff_temp))
 
-            if self.is_test1:
-                # print payoffs
-                self.f.write("\nPayoffs:\n")
-                for i in range(1, self.M_rows - 1):
-                    for j in range(1, self.N_cols - 1):
-                        self.f.write(
-                            "{0:5.1f}{1:5.1f}{2:5.1f}{3:5.1f}".format(cells[i, j].payoffs[1], cells[i, j].payoffs[2],
-                                                                      cells[i, j].payoffs[4], cells[i, j].payoffs[7]))
-                        self.f.write(
-                            "{0:5.1f}{1:5.1f}{2:5.1f}{3:5.1f}\n".format(cells[i, j].payoffs[6], cells[i, j].payoffs[5],
-                                                                        cells[i, j].payoffs[3], cells[i, j].payoffs[0]))
-                if not self.is_sharing:
+                # redistribute payoffs
+                if self.is_sharing:
+                    cells_temp = copy.deepcopy(cells)
+                    sum_payoff_temp = 0
+                    for i in range(1, self.M_rows - 1):
+                        for j in range(1, self.N_cols - 1):
+                            self.redistribute_payoff(cells, cells_temp, i, j)
+                            sum_payoff_temp += cells[i, j].avg_payoff
+
+                if self.is_test1 and self.is_sharing:
+                    # print payoffs
+                    self.f.write("\nPayoffs after redistribution:\n")
+                    for i in range(1, self.M_rows - 1):
+                        for j in range(1, self.N_cols - 1):
+                            self.f.write(
+                                "{0:5.1f}{1:5.1f}{2:5.1f}{3:5.1f}".format(cells[i, j].payoffs[1],
+                                                                          cells[i, j].payoffs[2],
+                                                                          cells[i, j].payoffs[4],
+                                                                          cells[i, j].payoffs[7]))
+                            self.f.write(
+                                "{0:5.1f}{1:5.1f}{2:5.1f}{3:5.1f}\n".format(cells[i, j].payoffs[6],
+                                                                            cells[i, j].payoffs[5],
+                                                                            cells[i, j].payoffs[3],
+                                                                            cells[i, j].payoffs[0]))
+
                     self.f.write("\nCumul_payoffs:\n")
                     for i in range(1, self.M_rows - 1):
                         for j in range(1, self.N_cols - 1):
@@ -341,47 +379,29 @@ class CA:
                     for i in range(1, self.M_rows - 1):
                         for j in range(1, self.N_cols - 1):
                             self.f.write("{0:<5.4f}\n".format(cells[i, j].avg_payoff))
-                    self.f.write("\nav_pay = {0:<5.4f}\n".format(avg_payoff_temp))
+                    _, avg_payoff = self.avg_payoff[k]
+                    self.f.write("\nav_pay = {0:<5.4f}\n".format(avg_payoff))
 
-            # copy cells to new array to change strategies and states
+                # checks if exceeds max num of iterations
+                if k >= self.num_of_iter - 1:
+                    # u_ += 1
+                    break
+
+                if u < self.u - 1:
+                    cells_temp = copy.deepcopy(cells)
+                    self.misc_stats.append((k + 1, 0, 0))
+                    self.avg_payoff.append((k, sum_payoff_temp / ((self.M_rows - 2) * (self.N_cols - 2) * u_)))
+                    self.cells.append((k + 1, cells_temp))
+                    u_ += 1
+                    k += 1
+
+
             cells_temp = copy.deepcopy(cells)
+            self.avg_payoff.append((k, sum_payoff_temp / ((self.M_rows - 2) * (self.N_cols - 2) * u_)))
 
-            # redistribute payoffs
-            if self.is_sharing:
-                sum_payoff_temp = 0
-                for i in range(1, self.M_rows - 1):
-                    for j in range(1, self.N_cols - 1):
-                        self.redistribute_payoff(cells, cells_temp, i, j)
-                        sum_payoff_temp += cells[i, j].avg_payoff
 
-            self.avg_payoff.append((k, sum_payoff_temp / ((self.M_rows - 2) * (self.N_cols - 2))))
-
-            if self.is_test1 and self.is_sharing:
-                # print payoffs
-                self.f.write("\nPayoffs after redistribution:\n")
-                for i in range(1, self.M_rows - 1):
-                    for j in range(1, self.N_cols - 1):
-                        self.f.write(
-                            "{0:5.1f}{1:5.1f}{2:5.1f}{3:5.1f}".format(cells[i, j].payoffs[1], cells[i, j].payoffs[2],
-                                                                      cells[i, j].payoffs[4], cells[i, j].payoffs[7]))
-                        self.f.write(
-                            "{0:5.1f}{1:5.1f}{2:5.1f}{3:5.1f}\n".format(cells[i, j].payoffs[6], cells[i, j].payoffs[5],
-                                                                        cells[i, j].payoffs[3], cells[i, j].payoffs[0]))
-
-                self.f.write("\nCumul_payoffs:\n")
-                for i in range(1, self.M_rows - 1):
-                    for j in range(1, self.N_cols - 1):
-                        self.f.write("{0:<5.1f}\n".format(cells[i, j].sum_payoff))
-
-                self.f.write("\nCumul_avg:\n")
-                for i in range(1, self.M_rows - 1):
-                    for j in range(1, self.N_cols - 1):
-                        self.f.write("{0:<5.4f}\n".format(cells[i, j].avg_payoff))
-                _, avg_payoff = self.avg_payoff[k]
-                self.f.write("\nav_pay = {0:<5.4f}\n".format(avg_payoff))
 
             if k != self.num_of_iter - 1:
-
                 # cells change strategy for competition winning cell's strategy with sync_prob probability
                 for i in range(1, self.M_rows - 1):
                     for j in range(1, self.N_cols - 1):
