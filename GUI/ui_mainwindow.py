@@ -263,7 +263,7 @@ class Ui_MainWindow(object):
         self.spinBox_num_of_iter = QSpinBox(self.groupBox_simul)
         self.spinBox_num_of_iter.setObjectName(u"spinBox_num_of_iter")
         self.spinBox_num_of_iter.setGeometry(QRect(90, 360, 51, 25))
-        self.spinBox_num_of_iter.setMaximum(500)
+        self.spinBox_num_of_iter.setMaximum(10000)
         self.spinBox_num_of_iter.setValue(100)
         self.spinBox_num_of_exper = QSpinBox(self.groupBox_simul)
         self.spinBox_num_of_exper.setObjectName(u"spinBox_num_of_exper")
