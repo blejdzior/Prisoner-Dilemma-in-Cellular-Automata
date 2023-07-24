@@ -8,6 +8,7 @@ import datetime
 import math
 import time
 import asyncio
+import timeit
 
 from PySide6.QtWidgets import (QMainWindow, QTableWidgetItem, QMessageBox, QGraphicsScene)
 from PySide6.QtGui import (QColor, QPixmap)
@@ -380,6 +381,7 @@ class MainWindow(QMainWindow):
             self.ui.spinBox_iters.setValue(0)
 
     def startSimulation(self):
+        start = time.time()
         self.ui.disableStartButton()
 
         self.closeRunningThreads()
@@ -450,9 +452,11 @@ class MainWindow(QMainWindow):
         self.ui.pushButton_states.setDisabled(0)
 
         self.save_results()
-
+        end = time.time()
+        print(end - start)
         self.simulationDoneMessage()
         self.enableStartButton()
+
 
     def state_color_handler(self):
         rows = self.data.canvas.rows

@@ -10,6 +10,7 @@ from algorithm.Cell import Cell
 from algorithm.Statistics import Statistics
 import sys
 import copy
+import time
 
 
 class CA:
@@ -76,7 +77,11 @@ class CA:
             self.cells = [(0, self.create_CA(p_init_C, allC, allD, kD, kC, minK, maxK))]
         else:
             self.cells = [(0, self.create_CA_debug())]
+
+
+
         self.evolution()
+
         self.statistics = self.calculate_statistics()
 
     def get_avg_payoff(self, iter):
@@ -253,7 +258,7 @@ class CA:
         return strategy, k
 
     def evolution(self):
-
+        sum = 0
         for k in range(0, self.num_of_iter, self.u):
 
             _, cells = self.cells[k]
@@ -315,6 +320,7 @@ class CA:
                         self.f.write("\n")
 
                 # calculate payoffs
+
                 for i in range(1, self.M_rows - 1):
                     for j in range(1, self.N_cols - 1):
                         if self.is_payoff_1:
@@ -325,7 +331,6 @@ class CA:
                             self.calculate_payoff_2(cells, i, j)
 
                         sum_payoff_temp += cells[i, j].avg_payoff
-
 
                 if self.is_test1:
                     # print payoffs
@@ -747,11 +752,12 @@ class CA:
     def calculate_payoff_2(self, cells, i, j):
         m = 0
         if cells[i, j].state == 0:
+            is_D = self.is_D_correct(cells, i, j)
             for k in range(i - 1, i + 2):
                 for n in range(j - 1, j + 2):
                     if k == i and j == n:
                         continue
-                    if self.is_D_correct(cells, i, j):
+                    if is_D:
                         cells[i, j].payoffs[m] = self.payoff_D_C
                         cells[i, j].sum_payoff += self.payoff_D_C
                     else:
@@ -759,11 +765,12 @@ class CA:
                         cells[i, j].sum_payoff += self.payoff_D_D
                     m += 1
         elif cells[i, j].state == 1:
+            is_C = self.is_C_correct(cells, i, j)
             for k in range(i - 1, i + 2):
                 for n in range(j - 1, j + 2):
                     if k == i and j == n:
                         continue
-                    if self.is_C_correct(cells, i, j):
+                    if is_C:
                         cells[i, j].payoffs[m] = self.payoff_C_C
                         cells[i, j].sum_payoff += self.payoff_C_C
                     else:
