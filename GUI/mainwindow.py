@@ -46,6 +46,8 @@ class MainWindow(QMainWindow):
     automata_start_signal = Signal()
     def __init__(self):
         super().__init__()
+        self.automata = None
+        self.automata_multirun = None
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
         self.threadpool = QThreadPool()
@@ -65,6 +67,7 @@ class MainWindow(QMainWindow):
 
 
         self.automata_thread = QThread()
+        self.threadpool = QThreadPool()
 
         # self.animation.signal.connect(self.update_graph)
 
@@ -158,8 +161,7 @@ class MainWindow(QMainWindow):
         self.automata_start_signal.connect(self.automata.evolution)
 
         self.automata.signal_finished.connect(self.automata_thread.quit)
-        if self.data.iterations.num_of_exper == 1:
-            self.automata.signal_finished.connect(self.save_results)
+        self.automata.signal_finished.connect(self.save_results)
         self.automata.signal_finished.connect(self.create_coloring)
         self.automata.signal_finished.connect(self.calculate_exec_time)
 
@@ -169,7 +171,7 @@ class MainWindow(QMainWindow):
         cols = self.data.canvas.cols
         seed = None
         self.automata_multirun = []
-        for i in range(self.data.iterations.num_of_exper - 1):
+        for i in range(self.data.iterations.num_of_exper):
             self.automata_multirun.append(CA(rows, cols, self.data.canvas.p_init_C, self.data.strategies.all_C,
                            self.data.strategies.all_D, self.data.strategies.k_D, self.data.strategies.k_C,
                            self.data.strategies.k_var_min, self.data.strategies.k_var_max,
@@ -183,8 +185,14 @@ class MainWindow(QMainWindow):
                            self.data.debugger.isDebug, self.data.debugger.is_test1, self.data.debugger.is_test2, self.f,
                            self.data.synch.optimal_num_1s, self.data.synch.is_payoff_1, self.data.synch.u,
                            seed))
-            # self.automata_multirun[i].setAutoDelete(False)
-            QThreadPool.globalInstance().start(self.automata_multirun[i])
+            self.automata_multirun[i].setAutoDelete(False)
+            if i == 0:
+                if self.data.iterations.num_of_exper == 1:
+                    self.automata_multirun[i].signals.signal.connect(self.update_graph_async)
+                self.automata_multirun[i].signals.signal_finished.connect(self.save_results)
+                self.automata_multirun[i].signals.signal_finished.connect(self.create_coloring)
+
+            self.threadpool.start(self.automata_multirun[i])
 
 
 
@@ -194,9 +202,12 @@ class MainWindow(QMainWindow):
         self.ui.graphicsView_CA.setRowCount(rows)
         self.ui.graphicsView_CA.setColumnCount(cols)
         self.f = open("RESULTS//outputs.txt", "w")
-        self.create_automata()
-        if self.data.iterations.num_of_exper > 1:
-            self.create_automata_multirun()
+        # if self.data.iterations.num_of_exper > 1:
+        self.create_automata_multirun()
+        self.automata = self.automata_multirun[0]
+        # else:
+        #     self.create_automata()
+
         k, cells = self.automata.cells[0]
         for n in range(rows):
             for m in range(cols):
@@ -653,7 +664,7 @@ class MainWindow(QMainWindow):
         f = open("RESULTS//results_a.txt", "w")
         f2 = open("RESULTS//results_b.txt", "w")
         f3 = open("m-RESULTS//m_results_a.txt", "w")
-        QThreadPool.globalInstance().waitForDone()
+        self.threadpool.waitForDone()
         self.save_parameters(f)
         self.save_parameters(f2)
         if self.data.iterations.num_of_exper > 1:
@@ -664,6 +675,7 @@ class MainWindow(QMainWindow):
 
 
         for i in range(self.data.iterations.num_of_exper):
+            self.automata = self.automata_multirun[i]
             if self.data.iterations.num_of_exper > 1:
                 f3.write("\n\n\n#Experiment: " + str(i))
                 f3.write("\n\n#seed: " + str(self.automata.seed) + "")
@@ -673,9 +685,6 @@ class MainWindow(QMainWindow):
                     "{0:14}{1:14}{2:15}{3:20}{4:26}".format("f_kD", "f_kC", "f_kDC", "f_strat_ch", "f_strat_ch_final"))
                 f3.write("{0:17}{1:17}{2:21}\n".format("f_cr_0s", "f_cr_1s", "optim_solut"))
 
-            # create new automata for next experiment
-            if i > 0:
-                self.create_automata()
 
             if i == 0:
                 # result-a
@@ -836,7 +845,7 @@ class MainWindow(QMainWindow):
         msg.setIcon(QMessageBox.Information)
         msg.setText("Finished calculating.")
         self.end = time.time()
-
+        self.calculate_exec_time()
         msg.setWindowTitle("Done!")
         msg.exec_()
 

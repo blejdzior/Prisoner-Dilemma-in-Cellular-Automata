@@ -13,9 +13,13 @@ import copy
 import time
 from PySide6.QtCore import Signal, QObject, QRunnable
 
-class CA(QObject, QRunnable):
+
+class CA_signals(QObject):
     signal = Signal(float, float, float, float, float)
     signal_finished = Signal()
+
+class CA(QRunnable):
+
 
     def __init__(self, M_rows, N_cols, p_init_C, allC, allD, kD, kC, minK, maxK, num_of_iter,
                  payoff_C_C, payoff_C_D, payoff_D_C, payoff_D_D, is_sharing, synch_prob,
@@ -23,6 +27,8 @@ class CA(QObject, QRunnable):
                  f, optimal_num1s, is_payoff_1, u, seed=None):
 
         super().__init__()
+        self.statistics = None
+        self.signals = CA_signals()
         self.p_init_C = p_init_C
         self.allC = allC
         self.allD = allD
@@ -93,6 +99,7 @@ class CA(QObject, QRunnable):
 
         # self.statistics = self.calculate_statistics()
     def run(self):
+        print("Runnable CA")
         self.evolution()
     def get_avg_payoff(self, iter):
         return self.avg_payoff[iter]
@@ -552,7 +559,7 @@ class CA(QObject, QRunnable):
         self.calculate_stats_for_graph(k)
         self.statistics = self.calculate_statistics()
         print("automata thread finished")
-        self.signal_finished.emit()
+        self.signals.signal_finished.emit()
 
 
     # mutation of cell state by negating current state
@@ -896,7 +903,7 @@ class CA(QObject, QRunnable):
         _, num_of_strat_change, num_of_strat_change_final = self.misc_stats[iter]
         f_strat_ch = num_of_strat_change / num_of_cells
         f_strat_ch_final = num_of_strat_change_final / num_of_cells
-        self.signal.emit(f_C, f_C_corr, av_sum, f_strat_ch, f_strat_ch_final)
+        self.signals.signal.emit(f_C, f_C_corr, av_sum, f_strat_ch, f_strat_ch_final)
     def calculate_statistics(self):
 
         statistics = []
