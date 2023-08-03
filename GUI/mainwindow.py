@@ -8,6 +8,7 @@ import datetime
 import math
 import time
 import asyncio
+import timeit
 
 from PySide6.QtWidgets import (QMainWindow, QTableWidgetItem, QMessageBox, QGraphicsScene)
 from PySide6.QtGui import (QColor, QPixmap)
@@ -145,7 +146,7 @@ class MainWindow(QMainWindow):
                            self.data.mutations.p_strat_mut, self.data.mutations.p_0_neighb_mut,
                            self.data.mutations.p_1_neighb_mut,
                            self.data.debugger.isDebug, self.data.debugger.is_test1, self.data.debugger.is_test2, self.f,
-                           self.data.synch.optimal_num_1s,
+                           self.data.synch.optimal_num_1s, self.data.synch.is_payoff_1, self.data.synch.u,
                            seed)
 
     def createTableCA(self):
@@ -153,20 +154,8 @@ class MainWindow(QMainWindow):
         cols = self.data.canvas.cols
         self.ui.graphicsView_CA.setRowCount(rows)
         self.ui.graphicsView_CA.setColumnCount(cols)
-        if self.seed.isCustomSeed:
-            seed = self.seed.customSeed
-        else:
-            seed = None
         self.f = open("RESULTS//outputs.txt", "w")
-        self.automata = CA(rows, cols, self.data.canvas.p_init_C, self.data.strategies.all_C,
-                           self.data.strategies.all_D, self.data.strategies.k_D, self.data.strategies.k_C,
-                           self.data.strategies.k_var_min, self.data.strategies.k_var_max, self.data.iterations.num_of_iter,
-                           self.data.payoff.d, self.data.payoff.c, self.data.payoff.b, self.data.payoff.a, self.canvas.isSharing,
-                           self.data.synch.synch_prob, self.data.competition.isTournament, self.data.mutations.p_state_mut,
-                           self.data.mutations.p_strat_mut, self.data.mutations.p_0_neighb_mut, self.data.mutations.p_1_neighb_mut,
-                           self.data.debugger.isDebug, self.data.debugger.is_test1, self.data.debugger.is_test2, self.f,
-                           self.data.synch.optimal_num_1s, self.ui.radiobutton_pay_fun_1.isChecked(),
-                           seed)
+        self.create_automata()
 
         k, cells = self.automata.cells[0]
         for n in range(rows):
@@ -392,6 +381,7 @@ class MainWindow(QMainWindow):
             self.ui.spinBox_iters.setValue(0)
 
     def startSimulation(self):
+        start = time.time()
         self.ui.disableStartButton()
 
         self.closeRunningThreads()
@@ -434,7 +424,8 @@ class MainWindow(QMainWindow):
                             self.ui.spinBox_custom_seed.value())
         
         self.synch = Synch(self.ui.doubleSpinBox_synch_prob.value(), 
-                            self.ui.spinBox_optimal_num_1s.value())
+                            self.ui.spinBox_optimal_num_1s.value(), self.ui.spinBox_u.value(),
+                           self.ui.radiobutton_pay_fun_1.isChecked())
         
         self.strategies = Strategies(self.ui.doubleSpinBox_allC.value(), 
                                         self.ui.doubleSpinBox_allD.value(), 
@@ -461,9 +452,11 @@ class MainWindow(QMainWindow):
         self.ui.pushButton_states.setDisabled(0)
 
         self.save_results()
-
+        end = time.time()
+        print(end - start)
         self.simulationDoneMessage()
         self.enableStartButton()
+
 
     def state_color_handler(self):
         rows = self.data.canvas.rows
@@ -610,6 +603,9 @@ class MainWindow(QMainWindow):
         f.write("\n#playerD_opponentD_payoff: " + str(self.data.payoff.a))
         f.write("\n#playerD_opponentC_payoff: " + str(self.data.payoff.b))
         f.write("\n#debug:  " + str(self.data.debugger.isDebug))
+        f.write("\n#pay_off_1: " + str(self.data.synch.is_payoff_1))
+        f.write("\n#pay_off_2: " + str(self.data.synch.is_payoff_2))
+        f.write("\n#u: " + str(self.data.synch.u))
 
 
     def save_results(self):

@@ -51,6 +51,7 @@ class Cell(QTableWidgetItem):
         cell = Cell(self.id, self.x, self.y, self.strategy, self.k, self.action, self.state, self.group_of_1s, self.group_of_0s,
                     self.change_strategy)
         cell.avg_payoff = self.avg_payoff
+        cell.sum_payoff = self.sum_payoff
         return cell
 
     def __init_subclass__(cls) -> None:
