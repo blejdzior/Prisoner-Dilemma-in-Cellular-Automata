@@ -43,6 +43,7 @@ from pathlib import Path
 
 class MainWindow(QMainWindow):
     anim_start_signal = Signal()
+    automata_start_signal = Signal()
     def __init__(self):
         super().__init__()
         self.ui = Ui_MainWindow()
@@ -62,6 +63,8 @@ class MainWindow(QMainWindow):
         self.animation.signalFinished.connect(self.animation_thread.quit)
         self.animation_thread.finished.connect(self.isRunning_false)
 
+
+        self.automata_thread = QThread()
 
         # self.animation.signal.connect(self.update_graph)
 
@@ -110,14 +113,14 @@ class MainWindow(QMainWindow):
             pixmap.save(fileName, "PNG", -1)
         self.selectVisualizationMode(currentMode)
         self.savedImagesMessage()
-        
+
 
     def changeCellsColor(self, selected, R, G, B, opacity=255):
         for ix in selected:
             row, column = ix
             self.ui.graphicsView_CA.item(row, column).setBackground(QColor(R,G,B, opacity))
-                
-                
+
+
     def roundDivision(self, size, n):
         floor = math.floor(size / n)
         roof = math.ceil(size / n)
@@ -149,6 +152,42 @@ class MainWindow(QMainWindow):
                            self.data.synch.optimal_num_1s, self.data.synch.is_payoff_1, self.data.synch.u,
                            seed)
 
+        self.automata.moveToThread(self.automata_thread)
+        self.automata.signal.connect(self.update_graph_async)
+
+        self.automata_start_signal.connect(self.automata.evolution)
+
+        self.automata.signal_finished.connect(self.automata_thread.quit)
+        if self.data.iterations.num_of_exper == 1:
+            self.automata.signal_finished.connect(self.save_results)
+        self.automata.signal_finished.connect(self.create_coloring)
+        self.automata.signal_finished.connect(self.calculate_exec_time)
+
+
+    def create_automata_multirun(self):
+        rows = self.data.canvas.rows
+        cols = self.data.canvas.cols
+        seed = None
+        self.automata_multirun = []
+        for i in range(self.data.iterations.num_of_exper - 1):
+            self.automata_multirun.append(CA(rows, cols, self.data.canvas.p_init_C, self.data.strategies.all_C,
+                           self.data.strategies.all_D, self.data.strategies.k_D, self.data.strategies.k_C,
+                           self.data.strategies.k_var_min, self.data.strategies.k_var_max,
+                           self.data.iterations.num_of_iter,
+                           self.data.payoff.d, self.data.payoff.c, self.data.payoff.b, self.data.payoff.a,
+                           self.canvas.isSharing,
+                           self.data.synch.synch_prob, self.data.competition.isTournament,
+                           self.data.mutations.p_state_mut,
+                           self.data.mutations.p_strat_mut, self.data.mutations.p_0_neighb_mut,
+                           self.data.mutations.p_1_neighb_mut,
+                           self.data.debugger.isDebug, self.data.debugger.is_test1, self.data.debugger.is_test2, self.f,
+                           self.data.synch.optimal_num_1s, self.data.synch.is_payoff_1, self.data.synch.u,
+                           seed))
+            # self.automata_multirun[i].setAutoDelete(False)
+            QThreadPool.globalInstance().start(self.automata_multirun[i])
+
+
+
     def createTableCA(self):
         rows = self.data.canvas.rows
         cols = self.data.canvas.cols
@@ -156,7 +195,8 @@ class MainWindow(QMainWindow):
         self.ui.graphicsView_CA.setColumnCount(cols)
         self.f = open("RESULTS//outputs.txt", "w")
         self.create_automata()
-
+        if self.data.iterations.num_of_exper > 1:
+            self.create_automata_multirun()
         k, cells = self.automata.cells[0]
         for n in range(rows):
             for m in range(cols):
@@ -170,8 +210,10 @@ class MainWindow(QMainWindow):
         self.ui.graphicsView_CA.setGeometry(QRect(490, 80, width, height))
         self.ui.graphicsView_CA.horizontalHeader().setDefaultSectionSize(cellWidth)
         self.ui.graphicsView_CA.verticalHeader().setDefaultSectionSize(cellHeight)
+        self.ui.pushButton_start_anim.setDisabled(True)
 
-        self.create_coloring()
+        self.automata_thread.start()
+        self.automata_start_signal.emit()
 
 
 
@@ -381,7 +423,7 @@ class MainWindow(QMainWindow):
             self.ui.spinBox_iters.setValue(0)
 
     def startSimulation(self):
-        start = time.time()
+        self.start = time.time()
         self.ui.disableStartButton()
 
         self.closeRunningThreads()
@@ -397,41 +439,41 @@ class MainWindow(QMainWindow):
             self.displayDataWarning()
             return
 
-        self.canvas = Canvas(self.ui.spinBox_Mrows.value(), 
-                                self.ui.spinBox_Ncols.value(), 
+        self.canvas = Canvas(self.ui.spinBox_Mrows.value(),
+                                self.ui.spinBox_Ncols.value(),
                                 self.ui.doubleSpinBox_p_init_C.value(),
                                 self.ui.checkBox_sharing.isChecked())
-        
+
         self.competition = Competition(self.ui.radioButton_roulette.isChecked(),
                                         self.ui.radioButton_tournament.isChecked())
-        
+
         self.debugger = Debugger(self.ui.radioButton_debug.isChecked(),
-                                    self.ui.radioButton_CA_state.isChecked(), 
+                                    self.ui.radioButton_CA_state.isChecked(),
                                     self.ui.radioButton_CA_strat.isChecked(),
                                  self.ui.radioButton_test1.isChecked(), self.ui.radioButton_test2.isChecked(),
                                  self.ui.radioButton_test3.isChecked())
-        
+
         self.iterations = Iterations(self.ui.spinBox_num_of_iter.value(),
                                         self.ui.spinBox_num_of_exper.value())
-        
-        self.mutation = Mutation(self.ui.doubleSpinBox_p_state_mut.value(), 
+
+        self.mutation = Mutation(self.ui.doubleSpinBox_p_state_mut.value(),
                                     self.ui.doubleSpinBox_p_strat_mut.value(),
-                                    self.ui.doubleSpinBox_p_0_neigh_mut.value(), 
+                                    self.ui.doubleSpinBox_p_0_neigh_mut.value(),
                                     self.ui.doubleSpinBox_p_1_neigh_mut.value())
-        
+
         self.seed = Seed(self.ui.radioButton_clock.isChecked(),
-                            self.ui.radioButton_custom.isChecked(), 
+                            self.ui.radioButton_custom.isChecked(),
                             self.ui.spinBox_custom_seed.value())
-        
-        self.synch = Synch(self.ui.doubleSpinBox_synch_prob.value(), 
+
+        self.synch = Synch(self.ui.doubleSpinBox_synch_prob.value(),
                             self.ui.spinBox_optimal_num_1s.value(), self.ui.spinBox_u.value(),
                            self.ui.radiobutton_pay_fun_1.isChecked())
-        
-        self.strategies = Strategies(self.ui.doubleSpinBox_allC.value(), 
-                                        self.ui.doubleSpinBox_allD.value(), 
-                                        self.ui.doubleSpinBox_kD.value(), 
-                                        self.ui.doubleSpinBox_kC.value(), 
-                                        self.ui.doubleSpinBox_kDC.value(), 
+
+        self.strategies = Strategies(self.ui.doubleSpinBox_allC.value(),
+                                        self.ui.doubleSpinBox_allD.value(),
+                                        self.ui.doubleSpinBox_kD.value(),
+                                        self.ui.doubleSpinBox_kC.value(),
+                                        self.ui.doubleSpinBox_kDC.value(),
                                         self.ui.spinBox_kMin.value(),
                                         self.ui.spinBox_kMax.value())
 
@@ -441,8 +483,9 @@ class MainWindow(QMainWindow):
                              self.ui.doubleSpinBox_d.value())
         self.ui.spinBox_iters.setMaximum(self.iterations.num_of_iter-1)
         self.visualization_mode = 0  # state visualization
+        self.create_graph()
         self.setData()
-        
+
         self.ui.pushButton_states.setDisabled(0)
         self.ui.pushButton_strategies.setDisabled(0)
         self.ui.pushButton_kD.setDisabled(0)
@@ -451,13 +494,11 @@ class MainWindow(QMainWindow):
         self.ui.pushButton_actions.setDisabled(0)
         self.ui.pushButton_states.setDisabled(0)
 
-        self.save_results()
-        end = time.time()
-        print(end - start)
-        self.simulationDoneMessage()
-        self.enableStartButton()
-
-
+        # self.save_results()
+        # self.simulationDoneMessage()
+        # self.enableStartButton()
+    def calculate_exec_time(self):
+        print(self.end - self.start)
     def state_color_handler(self):
         rows = self.data.canvas.rows
         cols = self.data.canvas.cols
@@ -469,12 +510,12 @@ class MainWindow(QMainWindow):
 
         self.changeCellsColor(self.coloring_state[iter], 255, 100, 0)
         self.visualization_mode = 0
-        
-        
+
+
     def strategies_color_handler(self):
         # if self.isAnimationRunning == True:
         #     self.animation.extendSleepTime()
-            
+
         rows = self.data.canvas.rows
         cols = self.data.canvas.cols
         iter = self.ui.spinBox_iters.value()
@@ -482,7 +523,7 @@ class MainWindow(QMainWindow):
         for i in range(rows):
             for j in range(cols):
                 self.ui.graphicsView_CA.item(i, j).setBackground(QColor(255, 255, 255, 255))
-        
+
         self.changeCellsColor(self.coloring_allC[iter], 255, 100, 0)  # red
         self.changeCellsColor(self.coloring_allD[iter], 0, 0, 255)  # blue
         self.changeCellsColor(self.coloring_kD[iter], 0, 128, 0)  # green
@@ -517,7 +558,7 @@ class MainWindow(QMainWindow):
     def kC_strategies_color_handler(self):
         # if self.isAnimationRunning == True:
         #     self.animation.extendSleepTime()
-        
+
         rows = self.data.canvas.rows
         cols = self.data.canvas.cols
         iter = self.ui.spinBox_iters.value()
@@ -612,7 +653,7 @@ class MainWindow(QMainWindow):
         f = open("RESULTS//results_a.txt", "w")
         f2 = open("RESULTS//results_b.txt", "w")
         f3 = open("m-RESULTS//m_results_a.txt", "w")
-
+        QThreadPool.globalInstance().waitForDone()
         self.save_parameters(f)
         self.save_parameters(f2)
         if self.data.iterations.num_of_exper > 1:
@@ -688,6 +729,8 @@ class MainWindow(QMainWindow):
                 f3.write("{0:23}{1:24}{2:29}{3:30}\n".format("av_f_strat_ch", "std_f_strat_ch", "av_f_strat_ch_final", "std_f_strat_ch_final"))
                 statistics_multirun.write_to_file(f3)
 
+        self.simulationDoneMessage()
+        self.enableStartButton()
 
 
     # update display of CA depending on iteration
@@ -707,7 +750,10 @@ class MainWindow(QMainWindow):
             self.action_color_handler()
 
     def enableStartButton(self):
-        self.ui.pushButton_start.setEnabled(True) 
+        self.ui.pushButton_start.setEnabled(True)
+        self.ui.pushButton_start_anim.setDisabled(False)
+
+
 
     def pause_animation(self):
         self.animation.stop()
@@ -767,6 +813,7 @@ class MainWindow(QMainWindow):
         scene.addWidget(self.gnuplot)
         self.ui.graphicsView_gnuplot.setScene(scene)
 
+    # method to update graph after automata finished calculating
     @Slot(int)
     def update_graph(self, iter):
         for statistics in self.automata.statistics:
@@ -776,14 +823,20 @@ class MainWindow(QMainWindow):
                 f_strat_ch = statistics.get_f_strat_ch()
                 f_strat_ch_final = statistics.get_f_strat_ch_final()
                 break
-            
+
         avg_payoff = self.automata.get_avg_payoff(iter)
         self.gnuplot.updateCanvas(f_C, f_C_corr, avg_payoff[1], f_strat_ch, f_strat_ch_final)
+
+        # method to update graph while automata is still calculating
+    def update_graph_async(self, f_C, f_C_corr, avg_payoff, f_strat_ch, f_strat_ch_final):
+        self.gnuplot.updateCanvas(f_C, f_C_corr, avg_payoff, f_strat_ch, f_strat_ch_final)
 
     def simulationDoneMessage(self):
         msg = QMessageBox()
         msg.setIcon(QMessageBox.Information)
         msg.setText("Finished calculating.")
+        self.end = time.time()
+
         msg.setWindowTitle("Done!")
         msg.exec_()
 

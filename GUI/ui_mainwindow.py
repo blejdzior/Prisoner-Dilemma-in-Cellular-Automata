@@ -417,8 +417,9 @@ class Ui_MainWindow(object):
         self.pushButton_start = QPushButton(self.centralwidget)
         self.pushButton_start.setObjectName(u"pushButton_start")
         self.pushButton_start.setGeometry(QRect(240, 560, 111, 71))
+        # self.pushButton_start.clicked.connect(MainWindow.create_graph)
         self.pushButton_start.clicked.connect(MainWindow.startSimulation)
-        self.pushButton_start.clicked.connect(MainWindow.create_graph)
+
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QMenuBar(MainWindow)
         self.menubar.setObjectName(u"menubar")

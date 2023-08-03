@@ -11,13 +11,23 @@ from algorithm.Statistics import Statistics
 import sys
 import copy
 import time
+from PySide6.QtCore import Signal, QObject, QRunnable
 
+class CA(QObject, QRunnable):
+    signal = Signal(float, float, float, float, float)
+    signal_finished = Signal()
 
-class CA:
     def __init__(self, M_rows, N_cols, p_init_C, allC, allD, kD, kC, minK, maxK, num_of_iter,
                  payoff_C_C, payoff_C_D, payoff_D_C, payoff_D_D, is_sharing, synch_prob,
                  is_tournament, p_state_mut, p_strat_mut, p_0_neigh_mut, p_1_neigh_mut, is_debug, is_test1, is_test2,
                  f, optimal_num1s, is_payoff_1, u, seed=None):
+
+        super().__init__()
+        self.p_init_C = p_init_C
+        self.allC = allC
+        self.allD = allD
+        self.kD = kD
+        self.kC = kC
         # size of CA
         self.M_rows = M_rows
         self.N_cols = N_cols
@@ -73,17 +83,17 @@ class CA:
         # (iter, f_strat_ch, f_strat_ch_final)
         self.misc_stats = [(0, 0, 0)]
         # save cells as a list o tuples (num_of_iter, numpy array of Cell instances)
+
         if not self.is_debug:
-            self.cells = [(0, self.create_CA(p_init_C, allC, allD, kD, kC, minK, maxK))]
+            self.cells = [(0, self.create_CA(self.p_init_C, self.allC, self.allD, self.kD, self.kC, self.minK, self.maxK))]
         else:
             self.cells = [(0, self.create_CA_debug())]
+        print("created")
+        # self.evolution()
 
-
-
+        # self.statistics = self.calculate_statistics()
+    def run(self):
         self.evolution()
-
-        self.statistics = self.calculate_statistics()
-
     def get_avg_payoff(self, iter):
         return self.avg_payoff[iter]
 
@@ -258,6 +268,8 @@ class CA:
         return strategy, k
 
     def evolution(self):
+        print("another thread")
+
         sum = 0
         for k in range(0, self.num_of_iter, self.u):
 
@@ -290,9 +302,11 @@ class CA:
                             self.f.write("My_neighb_states:\n")
                             self.f.write("{0:2}".format(cells[i, j].state))
                             self.f.write("{0:2}{1:2}{2:2}{3:2}".format(cells[i - 1, j].state, cells[i - 1, j + 1].state,
-                                                                       cells[i, j + 1].state, cells[i + 1, j + 1].state))
-                            self.f.write("{0:2}{1:2}{2:2}{3:2}\n".format(cells[i + 1, j].state, cells[i + 1, j - 1].state,
-                                                                         cells[i, j - 1].state, cells[i - 1, j - 1].state))
+                                                                       cells[i, j + 1].state,
+                                                                       cells[i + 1, j + 1].state))
+                            self.f.write(
+                                "{0:2}{1:2}{2:2}{3:2}\n".format(cells[i + 1, j].state, cells[i + 1, j - 1].state,
+                                                                cells[i, j - 1].state, cells[i - 1, j - 1].state))
                         # decide whether cell will be changing strategy in this iteration with synch_prob probability
                         self.is_cell_changing_strategy(cells[i, j])
                 if self.is_test1:
@@ -339,11 +353,15 @@ class CA:
                     for i in range(1, self.M_rows - 1):
                         for j in range(1, self.N_cols - 1):
                             self.f.write(
-                                "{0:5.1f}{1:5.1f}{2:5.1f}{3:5.1f}".format(cells[i, j].payoffs[1], cells[i, j].payoffs[2],
-                                                                          cells[i, j].payoffs[4], cells[i, j].payoffs[7]))
+                                "{0:5.1f}{1:5.1f}{2:5.1f}{3:5.1f}".format(cells[i, j].payoffs[1],
+                                                                          cells[i, j].payoffs[2],
+                                                                          cells[i, j].payoffs[4],
+                                                                          cells[i, j].payoffs[7]))
                             self.f.write(
-                                "{0:5.1f}{1:5.1f}{2:5.1f}{3:5.1f}\n".format(cells[i, j].payoffs[6], cells[i, j].payoffs[5],
-                                                                            cells[i, j].payoffs[3], cells[i, j].payoffs[0]))
+                                "{0:5.1f}{1:5.1f}{2:5.1f}{3:5.1f}\n".format(cells[i, j].payoffs[6],
+                                                                            cells[i, j].payoffs[5],
+                                                                            cells[i, j].payoffs[3],
+                                                                            cells[i, j].payoffs[0]))
                     if not self.is_sharing:
                         self.f.write("\nCumul_payoffs:\n")
                         for i in range(1, self.M_rows - 1):
@@ -393,12 +411,8 @@ class CA:
                     _, avg_payoff = self.avg_payoff[k]
                     self.f.write("\nav_pay = {0:<5.4f}\n".format(avg_payoff))
 
-
-
                 cells_temp = copy.deepcopy(cells)
                 self.avg_payoff.append((k, sum_payoff_temp / ((self.M_rows - 2) * (self.N_cols - 2) * u_)))
-
-
 
                 if k < self.num_of_iter - 1:
                     # cells change strategy for competition winning cell's strategy with sync_prob probability
@@ -416,7 +430,8 @@ class CA:
                                 if cells_temp[i, j].strategy != cells[i, j].strategy:
                                     change_strat_count_final += 1
                                 else:
-                                    if (cells[i, j].strategy == 2 or cells[i, j].strategy == 3 or cells[i, j].strategy == 4) and \
+                                    if (cells[i, j].strategy == 2 or cells[i, j].strategy == 3 or cells[
+                                        i, j].strategy == 4) and \
                                             cells[i, j].k != cells_temp[i, j].k:
                                         change_strat_count_final += 1
                             # strategy mutation with p_strat_mut probability
@@ -529,11 +544,16 @@ class CA:
                     change_strat_count_final = 0
                     u_ += 1
 
-
-
                 self.misc_stats.append((k + 1, change_strat_count, change_strat_count_final))
                 self.cells.append((k + 1, cells_temp))
+                self.calculate_stats_for_graph(k)
+                time.sleep(0.05)
                 k += 1
+        self.calculate_stats_for_graph(k)
+        self.statistics = self.calculate_statistics()
+        print("automata thread finished")
+        self.signal_finished.emit()
+
 
     # mutation of cell state by negating current state
     def mutate_state(self, cell):
@@ -611,11 +631,14 @@ class CA:
             self.f.write("\n\nCOMPETE TOURNAMENT:\n")
             self.f.write("id={0:<10}\nmy_cum_payoff={1:<10.3f}\n".format(cells[i, j].id, cells[i, j].sum_payoff))
             self.f.write("Neighbour_payoff\n")
-            self.f.write("{0:<6.3f}{1:<6.3f}{2:<6.3f}{3:<6.3f}".format(cells[i - 1, j].sum_payoff, cells[i - 1, j + 1].sum_payoff,
-                                                           cells[i, j + 1].sum_payoff, cells[i + 1, j + 1].sum_payoff))
-            self.f.write("{0:<6.3f}{1:<6.3f}{2:<6.3f}{3:<6.3f}\n".format(cells[i + 1, j].sum_payoff, cells[i + 1, j - 1].sum_payoff,
-                                                             cells[i, j - 1].sum_payoff,
-                                                             cells[i - 1, j - 1].sum_payoff))
+            self.f.write("{0:<6.3f}{1:<6.3f}{2:<6.3f}{3:<6.3f}".format(cells[i - 1, j].sum_payoff,
+                                                                       cells[i - 1, j + 1].sum_payoff,
+                                                                       cells[i, j + 1].sum_payoff,
+                                                                       cells[i + 1, j + 1].sum_payoff))
+            self.f.write("{0:<6.3f}{1:<6.3f}{2:<6.3f}{3:<6.3f}\n".format(cells[i + 1, j].sum_payoff,
+                                                                         cells[i + 1, j - 1].sum_payoff,
+                                                                         cells[i, j - 1].sum_payoff,
+                                                                         cells[i - 1, j - 1].sum_payoff))
 
         if max_payoff[2] < cells[i - 1, j].sum_payoff:
             max_payoff = (i - 1, j, cells[i - 1, j].sum_payoff)
@@ -654,11 +677,14 @@ class CA:
             self.f.write("\n\nCOMPETE ROULETTE:\n")
             self.f.write("id={0:<10}\nmy_cum_payoff={1:<10.3f}\n".format(cells[i, j].id, cells[i, j].sum_payoff))
             self.f.write("Neighbour_payoff\n")
-            self.f.write("{0:<6.3f}{1:<6.3f}{2:<6.3f}{3:<6.3f}".format(cells[i - 1, j].sum_payoff, cells[i - 1, j + 1].sum_payoff,
-                                                           cells[i, j + 1].sum_payoff, cells[i + 1, j + 1].sum_payoff))
-            self.f.write("{0:<6.3f}{1:<6.3f}{2:<6.3f}{3:<6.3f}\n".format(cells[i + 1, j].sum_payoff, cells[i + 1, j - 1].sum_payoff,
-                                                             cells[i, j - 1].sum_payoff,
-                                                             cells[i - 1, j - 1].sum_payoff))
+            self.f.write("{0:<6.3f}{1:<6.3f}{2:<6.3f}{3:<6.3f}".format(cells[i - 1, j].sum_payoff,
+                                                                       cells[i - 1, j + 1].sum_payoff,
+                                                                       cells[i, j + 1].sum_payoff,
+                                                                       cells[i + 1, j + 1].sum_payoff))
+            self.f.write("{0:<6.3f}{1:<6.3f}{2:<6.3f}{3:<6.3f}\n".format(cells[i + 1, j].sum_payoff,
+                                                                         cells[i + 1, j - 1].sum_payoff,
+                                                                         cells[i, j - 1].sum_payoff,
+                                                                         cells[i - 1, j - 1].sum_payoff))
 
         for k in range(i - 1, i + 2):
             for n in range(j - 1, j + 2):
@@ -674,10 +700,10 @@ class CA:
             self.f.write("SUM={0:<10.3f}\nselect_prob\n".format(sum_of_payoffs))
             self.f.write(
                 "{0:<6.3f}{1:<6.3f}{2:<6.3f}{3:<6.3f}".format(probabilities[1][2], probabilities[2][2],
-                                                          probabilities[4][2], probabilities[7][2]))
+                                                              probabilities[4][2], probabilities[7][2]))
             self.f.write(
                 "{0:<6.3f}{1:<6.3f}{2:<6.3f}{3:<6.3f}\n".format(probabilities[6][2], probabilities[5][2],
-                                                            probabilities[3][2], probabilities[0][2]))
+                                                                probabilities[3][2], probabilities[0][2]))
         for k, n, probability in probabilities:
             if probability == 0:
                 continue
@@ -852,6 +878,25 @@ class CA:
                         return True
         return False
 
+    def calculate_stats_for_graph(self, iter):
+        num_of_cells = 0
+        num_of_C = 0
+        num_of_C_corr = 0
+        _, cells = self.cells[iter]
+        for i in range(1, self.M_rows - 1):
+            for j in range(1, self.N_cols - 1):
+                num_of_cells += 1
+                if cells[i, j].state == 1:
+                    num_of_C += 1
+                    if self.is_C_correct(cells, i, j):
+                        num_of_C_corr += 1
+        f_C = num_of_C / num_of_cells
+        f_C_corr = num_of_C_corr / self.optimal_num_1s
+        iter1, av_sum = self.avg_payoff[iter]
+        _, num_of_strat_change, num_of_strat_change_final = self.misc_stats[iter]
+        f_strat_ch = num_of_strat_change / num_of_cells
+        f_strat_ch_final = num_of_strat_change_final / num_of_cells
+        self.signal.emit(f_C, f_C_corr, av_sum, f_strat_ch, f_strat_ch_final)
     def calculate_statistics(self):
 
         statistics = []
