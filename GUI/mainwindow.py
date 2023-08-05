@@ -30,13 +30,14 @@ from DATA.payoff import Payoff
 
 from algorithm.CA import CA
 from GUI.animation import Animation
-
+from algorithm.CAQT import CAQT
 
 from GUI.gnuplot import GnuplotCanvas
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 import numpy as np
 from algorithm.StatisticsMultirun import StatisticsMultirun
+import multiprocessing
 
 import os
 from pathlib import Path
@@ -46,12 +47,11 @@ class MainWindow(QMainWindow):
     automata_start_signal = Signal()
     def __init__(self):
         super().__init__()
+        self.is_multi_run = None
         self.automata = None
         self.automata_multirun = None
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
-        self.threadpool = QThreadPool()
-        self.mutex = QMutex()
         self.isAnimationRunning = False
         self.visualization_mode = 0
 
@@ -67,7 +67,7 @@ class MainWindow(QMainWindow):
 
 
         self.automata_thread = QThread()
-        self.threadpool = QThreadPool()
+        self.pool = multiprocessing.Pool(maxtasksperchild=4)
 
         # self.animation.signal.connect(self.update_graph)
 
@@ -141,7 +141,7 @@ class MainWindow(QMainWindow):
             seed = self.seed.customSeed
         else:
             seed = None
-        self.automata = CA(rows, cols, self.data.canvas.p_init_C, self.data.strategies.all_C,
+        self.automata = CAQT(rows, cols, self.data.canvas.p_init_C, self.data.strategies.all_C,
                            self.data.strategies.all_D, self.data.strategies.k_D, self.data.strategies.k_C,
                            self.data.strategies.k_var_min, self.data.strategies.k_var_max,
                            self.data.iterations.num_of_iter,
@@ -163,36 +163,54 @@ class MainWindow(QMainWindow):
         self.automata.signal_finished.connect(self.automata_thread.quit)
         self.automata.signal_finished.connect(self.save_results)
         self.automata.signal_finished.connect(self.create_coloring)
-        self.automata.signal_finished.connect(self.calculate_exec_time)
 
 
     def create_automata_multirun(self):
         rows = self.data.canvas.rows
         cols = self.data.canvas.cols
-        seed = None
-        self.automata_multirun = []
-        for i in range(self.data.iterations.num_of_exper):
-            self.automata_multirun.append(CA(rows, cols, self.data.canvas.p_init_C, self.data.strategies.all_C,
-                           self.data.strategies.all_D, self.data.strategies.k_D, self.data.strategies.k_C,
-                           self.data.strategies.k_var_min, self.data.strategies.k_var_max,
-                           self.data.iterations.num_of_iter,
-                           self.data.payoff.d, self.data.payoff.c, self.data.payoff.b, self.data.payoff.a,
-                           self.canvas.isSharing,
-                           self.data.synch.synch_prob, self.data.competition.isTournament,
-                           self.data.mutations.p_state_mut,
-                           self.data.mutations.p_strat_mut, self.data.mutations.p_0_neighb_mut,
-                           self.data.mutations.p_1_neighb_mut,
-                           self.data.debugger.isDebug, self.data.debugger.is_test1, self.data.debugger.is_test2, self.f,
-                           self.data.synch.optimal_num_1s, self.data.synch.is_payoff_1, self.data.synch.u,
-                           seed))
-            self.automata_multirun[i].setAutoDelete(False)
-            if i == 0:
-                if self.data.iterations.num_of_exper == 1:
-                    self.automata_multirun[i].signals.signal.connect(self.update_graph_async)
-                self.automata_multirun[i].signals.signal_finished.connect(self.save_results)
-                self.automata_multirun[i].signals.signal_finished.connect(self.create_coloring)
+        if self.seed.isCustomSeed:
+            seed = self.seed.customSeed
+        else:
+            seed = None
 
-            self.threadpool.start(self.automata_multirun[i])
+        self.result = []
+        args = []
+        for i in range(self.data.iterations.num_of_exper):
+            # self.automata_multirun.append(CA(rows, cols, self.data.canvas.p_init_C, self.data.strategies.all_C,
+            #                self.data.strategies.all_D, self.data.strategies.k_D, self.data.strategies.k_C,
+            #                self.data.strategies.k_var_min, self.data.strategies.k_var_max,
+            #                self.data.iterations.num_of_iter,
+            #                self.data.payoff.d, self.data.payoff.c, self.data.payoff.b, self.data.payoff.a,
+            #                self.canvas.isSharing,
+            #                self.data.synch.synch_prob, self.data.competition.isTournament,
+            #                self.data.mutations.p_state_mut,
+            #                self.data.mutations.p_strat_mut, self.data.mutations.p_0_neighb_mut,
+            #                self.data.mutations.p_1_neighb_mut,
+            #                self.data.debugger.isDebug, self.data.debugger.is_test1, self.data.debugger.is_test2, self.f,
+            #                self.data.synch.optimal_num_1s, self.data.synch.is_payoff_1, self.data.synch.u, is_multi_run,
+            #                seed))
+            # self.automata_multirun[i].setAutoDelete(False)
+            # if i == 0:
+            #     if self.data.iterations.num_of_exper == 1:
+            #         self.automata_multirun[i].signals.signal.connect(self.update_graph_async)
+            #     self.automata_multirun[i].signals.signal_finished.connect(self.save_results)
+            #     self.automata_multirun[i].signals.signal_finished.connect(self.create_coloring)'
+            #
+            # self.threadpool.start(self.automata_multirun[i])
+            self.result.append(self.pool.apply_async(run_process, args=(rows, cols, self.data.canvas.p_init_C, self.data.strategies.all_C,
+                            self.data.strategies.all_D, self.data.strategies.k_D, self.data.strategies.k_C,
+                            self.data.strategies.k_var_min, self.data.strategies.k_var_max,
+                            self.data.iterations.num_of_iter,
+                            self.data.payoff.d, self.data.payoff.c, self.data.payoff.b, self.data.payoff.a,
+                            self.canvas.isSharing,
+                            self.data.synch.synch_prob, self.data.competition.isTournament,
+                            self.data.mutations.p_state_mut,
+                            self.data.mutations.p_strat_mut, self.data.mutations.p_0_neighb_mut,
+                            self.data.mutations.p_1_neighb_mut,
+                            self.data.debugger.isDebug, self.data.debugger.is_test1, self.data.debugger.is_test2, 1,
+                            self.data.synch.optimal_num_1s, self.data.synch.is_payoff_1, self.data.synch.u, self.is_multi_run,
+                            seed)))
+
 
 
 
@@ -203,15 +221,19 @@ class MainWindow(QMainWindow):
         self.ui.graphicsView_CA.setColumnCount(cols)
         self.f = open("RESULTS//outputs.txt", "w")
         # if self.data.iterations.num_of_exper > 1:
-        self.create_automata_multirun()
-        self.automata = self.automata_multirun[0]
-        # else:
-        #     self.create_automata()
-
+        if self.data.iterations.num_of_exper == 1:
+            self.is_multi_run = False
+        else:
+            self.is_multi_run = True
+        if self.is_multi_run:
+            self.create_automata_multirun()
+            self.automata = self.result[0].get()
+        else:
+             self.create_automata()
         k, cells = self.automata.cells[0]
         for n in range(rows):
             for m in range(cols):
-                self.ui.graphicsView_CA.setItem(n, m, cells[n, m])
+                self.ui.graphicsView_CA.setItem(n, m, QTableWidgetItem())
                 if cells[n, m].state == 1:
                         self.ui.graphicsView_CA.item(n, m).setBackground(QColor(255, 100, 0, 255))
         cellWidth = self.roundDivision(300, cols)
@@ -223,8 +245,9 @@ class MainWindow(QMainWindow):
         self.ui.graphicsView_CA.verticalHeader().setDefaultSectionSize(cellHeight)
         self.ui.pushButton_start_anim.setDisabled(True)
 
-        self.automata_thread.start()
-        self.automata_start_signal.emit()
+        if not self.is_multi_run:
+            self.automata_thread.start()
+            self.automata_start_signal.emit()
 
 
 
@@ -504,8 +527,10 @@ class MainWindow(QMainWindow):
         self.ui.pushButton_kDC.setDisabled(0)
         self.ui.pushButton_actions.setDisabled(0)
         self.ui.pushButton_states.setDisabled(0)
+        if self.is_multi_run:
+            self.create_coloring()
+            self.save_results()
 
-        # self.save_results()
         # self.simulationDoneMessage()
         # self.enableStartButton()
     def calculate_exec_time(self):
@@ -664,18 +689,21 @@ class MainWindow(QMainWindow):
         f = open("RESULTS//results_a.txt", "w")
         f2 = open("RESULTS//results_b.txt", "w")
         f3 = open("m-RESULTS//m_results_a.txt", "w")
-        self.threadpool.waitForDone()
         self.save_parameters(f)
         self.save_parameters(f2)
         if self.data.iterations.num_of_exper > 1:
             self.save_parameters(f3)
 
-
-        stats_multirun = []
-
+        if self.is_multi_run:
+            stats_multirun = []
+            self.automata_multirun = []
+            for result in self.result:
+                self.automata_multirun.append(result.get())
 
         for i in range(self.data.iterations.num_of_exper):
-            self.automata = self.automata_multirun[i]
+            if self.is_multi_run:
+                self.automata = self.automata_multirun[i]
+
             if self.data.iterations.num_of_exper > 1:
                 f3.write("\n\n\n#Experiment: " + str(i))
                 f3.write("\n\n#seed: " + str(self.automata.seed) + "")
@@ -719,10 +747,11 @@ class MainWindow(QMainWindow):
                     statistics.write_stats_to_file_b(f2)
                     statistics.write_stats_to_file_a(f)
 
-                if self.data.iterations.num_of_exper > 1:
+                if self.is_multi_run:
                     statistics.write_stats_to_file_a(f3)
-                stats_multirun_temp.append(statistics)
-            stats_multirun.append((i, stats_multirun_temp))
+                    stats_multirun_temp.append(statistics)
+            if self.is_multi_run:
+                stats_multirun.append((i, stats_multirun_temp))
 
             if 0 < self.data.iterations.num_of_exper - 1 == i:
                 statistics_multirun = StatisticsMultirun(stats_multirun, self.data.iterations.num_of_iter, self.data.iterations.num_of_exper)
@@ -849,3 +878,33 @@ class MainWindow(QMainWindow):
         msg.setWindowTitle("Done!")
         msg.exec_()
 
+
+
+def run_process(rows, cols, p_init_C, all_C,
+                all_D, k_D, k_C,
+                k_var_min, k_var_max,
+                num_of_iter,
+                d, c, b, a,
+                isSharing,
+                synch_prob, isTournament,
+                p_state_mut,
+                p_strat_mut, p_0_neighb_mut,
+                p_1_neighb_mut,
+                isDebug, is_test1, is_test2, f,
+                optimal_num_1s, is_payoff_1, u, is_multi_run, seed):
+
+    automata_multirun = (CA(rows, cols, p_init_C, all_C,
+                                 all_D, k_D, k_C,
+                                 k_var_min, k_var_max,
+                                 num_of_iter,
+                                 d, c, b, a,
+                                 isSharing,
+                                 synch_prob, isTournament,
+                                 p_state_mut,
+                                 p_strat_mut, p_0_neighb_mut,
+                                 p_1_neighb_mut,
+                                 isDebug, is_test1, is_test2, f,
+                                 optimal_num_1s, is_payoff_1, u, is_multi_run,
+                                 seed))
+    automata_multirun.evolution()
+    return automata_multirun

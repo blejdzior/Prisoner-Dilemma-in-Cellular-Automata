@@ -10,17 +10,22 @@ from algorithm.Cell import Cell
 from algorithm.Statistics import Statistics
 import sys
 import copy
-import os
+import time
+from PySide6.QtCore import Signal, QObject, QRunnable
 
-class CA():
 
+
+
+# class created to communicate with QT Gui in real time
+class CAQT(QObject):
+    signal = Signal(float, float, float, float, float)
+    signal_finished = Signal()
     def __init__(self, M_rows, N_cols, p_init_C, allC, allD, kD, kC, minK, maxK, num_of_iter,
                  payoff_C_C, payoff_C_D, payoff_D_C, payoff_D_D, is_sharing, synch_prob,
                  is_tournament, p_state_mut, p_strat_mut, p_0_neigh_mut, p_1_neigh_mut, is_debug, is_test1, is_test2,
-                 f, optimal_num1s, is_payoff_1, u, is_multi_run, seed=None):
+                 f, optimal_num1s, is_payoff_1, u, seed=None):
 
         super().__init__()
-        self.is_multi_run = is_multi_run
         self.statistics = None
         self.p_init_C = p_init_C
         self.allC = allC
@@ -55,8 +60,7 @@ class CA():
         self.is_debug = is_debug
         self.is_test1 = is_test1
         self.is_test2 = is_test2
-        if is_multi_run:
-            self.f = f
+        self.f = f
 
         # competition type, if true - tournament competition, else roulette competition
         self.is_tournament = is_tournament
@@ -89,11 +93,7 @@ class CA():
         else:
             self.cells = [(0, self.create_CA_debug())]
         # self.evolution()
-
         # self.statistics = self.calculate_statistics()
-    def run(self):
-        # print("Thread run")
-        self.evolution()
     def get_avg_payoff(self, iter):
         return self.avg_payoff[iter]
 
@@ -268,7 +268,8 @@ class CA():
         return strategy, k
 
     def evolution(self):
-        print("process started PID: %d" % os.getpid())
+        print("thread started")
+
         sum = 0
         for k in range(0, self.num_of_iter, self.u):
 
@@ -545,9 +546,13 @@ class CA():
 
                 self.misc_stats.append((k + 1, change_strat_count, change_strat_count_final))
                 self.cells.append((k + 1, cells_temp))
+                self.calculate_stats_for_graph(k)
+                time.sleep(0.05)
                 k += 1
+        self.calculate_stats_for_graph(k)
         self.statistics = self.calculate_statistics()
-        print("process finished PID: %d" % os.getpid())
+        print("thread finished")
+        self.signal_finished.emit()
 
 
     # mutation of cell state by negating current state
@@ -891,6 +896,7 @@ class CA():
         _, num_of_strat_change, num_of_strat_change_final = self.misc_stats[iter]
         f_strat_ch = num_of_strat_change / num_of_cells
         f_strat_ch_final = num_of_strat_change_final / num_of_cells
+        self.signal.emit(f_C, f_C_corr, av_sum, f_strat_ch, f_strat_ch_final)
     def calculate_statistics(self):
 
         statistics = []
