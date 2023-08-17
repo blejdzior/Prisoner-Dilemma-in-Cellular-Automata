@@ -5,6 +5,7 @@ import sys
 from PySide6.QtWidgets import QApplication
 
 from GUI.mainwindow import MainWindow
+import multiprocessing
 
 
 import os
@@ -17,5 +18,6 @@ def main():
 
 
 if __name__ == "__main__":
+    multiprocessing.freeze_support()
     main()
 

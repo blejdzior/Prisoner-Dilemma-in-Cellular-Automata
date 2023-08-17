@@ -342,7 +342,7 @@ class CA():
                             if self.is_test1 and self.is_debug:
                                 self.f.write("PLAY_GAME_2\n")
                             self.calculate_payoff_2(cells, i, j)
-
+                        cells[i, j].avg_payoff /= u_
                         sum_payoff_temp += cells[i, j].avg_payoff
 
                 if self.is_test1:
@@ -411,7 +411,7 @@ class CA():
                     self.f.write("\nav_pay = {0:<5.4f}\n".format(avg_payoff))
 
                 cells_temp = copy.deepcopy(cells)
-                self.avg_payoff.append((k, sum_payoff_temp / ((self.M_rows - 2) * (self.N_cols - 2) * u_)))
+                self.avg_payoff.append((k, sum_payoff_temp / ((self.M_rows - 2) * (self.N_cols - 2))))
 
                 if k < self.num_of_iter - 1:
                     # cells change strategy for competition winning cell's strategy with sync_prob probability
