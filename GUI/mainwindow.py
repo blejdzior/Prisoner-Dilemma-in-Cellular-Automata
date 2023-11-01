@@ -141,7 +141,7 @@ class MainWindow(QMainWindow):
             seed = self.seed.customSeed
         else:
             seed = None
-        self.automata = CAQT(rows, cols, self.data.canvas.p_init_C, self.data.strategies.all_C,
+        self.automata = CA(rows, cols, self.data.canvas.p_init_C, self.data.strategies.all_C,
                            self.data.strategies.all_D, self.data.strategies.k_D, self.data.strategies.k_C,
                            self.data.strategies.k_var_min, self.data.strategies.k_var_max,
                            self.data.iterations.num_of_iter,
@@ -152,7 +152,7 @@ class MainWindow(QMainWindow):
                            self.data.mutations.p_strat_mut, self.data.mutations.p_0_neighb_mut,
                            self.data.mutations.p_1_neighb_mut,
                            self.data.debugger.isDebug, self.data.debugger.is_test1, self.data.debugger.is_test2, self.f,
-                           self.data.synch.optimal_num_1s, self.data.synch.is_payoff_1, self.data.synch.u,
+                           self.data.synch.optimal_num_1s, self.data.synch.is_payoff_1, self.data.synch.u, self.is_multi_run,
                            seed)
 
         self.automata.moveToThread(self.automata_thread)
@@ -174,29 +174,7 @@ class MainWindow(QMainWindow):
             seed = None
 
         self.result = []
-        args = []
         for i in range(self.data.iterations.num_of_exper):
-            # self.automata_multirun.append(CA(rows, cols, self.data.canvas.p_init_C, self.data.strategies.all_C,
-            #                self.data.strategies.all_D, self.data.strategies.k_D, self.data.strategies.k_C,
-            #                self.data.strategies.k_var_min, self.data.strategies.k_var_max,
-            #                self.data.iterations.num_of_iter,
-            #                self.data.payoff.d, self.data.payoff.c, self.data.payoff.b, self.data.payoff.a,
-            #                self.canvas.isSharing,
-            #                self.data.synch.synch_prob, self.data.competition.isTournament,
-            #                self.data.mutations.p_state_mut,
-            #                self.data.mutations.p_strat_mut, self.data.mutations.p_0_neighb_mut,
-            #                self.data.mutations.p_1_neighb_mut,
-            #                self.data.debugger.isDebug, self.data.debugger.is_test1, self.data.debugger.is_test2, self.f,
-            #                self.data.synch.optimal_num_1s, self.data.synch.is_payoff_1, self.data.synch.u, is_multi_run,
-            #                seed))
-            # self.automata_multirun[i].setAutoDelete(False)
-            # if i == 0:
-            #     if self.data.iterations.num_of_exper == 1:
-            #         self.automata_multirun[i].signals.signal.connect(self.update_graph_async)
-            #     self.automata_multirun[i].signals.signal_finished.connect(self.save_results)
-            #     self.automata_multirun[i].signals.signal_finished.connect(self.create_coloring)'
-            #
-            # self.threadpool.start(self.automata_multirun[i])
             self.result.append(self.pool.apply_async(run_process, args=(rows, cols, self.data.canvas.p_init_C, self.data.strategies.all_C,
                             self.data.strategies.all_D, self.data.strategies.k_D, self.data.strategies.k_C,
                             self.data.strategies.k_var_min, self.data.strategies.k_var_max,
@@ -689,10 +667,12 @@ class MainWindow(QMainWindow):
         f = open("RESULTS//results_a.txt", "w")
         f2 = open("RESULTS//results_b.txt", "w")
         f3 = open("m-RESULTS//m_results_a.txt", "w")
+        f4 = open("m-RESULTS//max_f_C_corr.txt", "w")
         self.save_parameters(f)
         self.save_parameters(f2)
         if self.data.iterations.num_of_exper > 1:
             self.save_parameters(f3)
+            self.save_parameters(f4)
 
         if self.is_multi_run:
             stats_multirun = []
@@ -712,6 +692,14 @@ class MainWindow(QMainWindow):
                 f3.write(
                     "{0:14}{1:14}{2:15}{3:20}{4:26}".format("f_kD", "f_kC", "f_kDC", "f_strat_ch", "f_strat_ch_final"))
                 f3.write("{0:17}{1:17}{2:21}\n".format("f_cr_0s", "f_cr_1s", "optim_solut"))
+
+                f4.write("\n\n\n#Experiment: " + str(i))
+                f4.write("\n\n#seed: " + str(self.automata.seed) + "")
+                f4.write("\n{0:10}{1:13}{2:18}{3:16}{4:16}{5:16}".format("#iter", "f_C", "f_C_corr", "av_sum", "f_allC",
+                                                                        "f_allD"))
+                f4.write(
+                    "{0:14}{1:14}{2:15}{3:20}{4:26}".format("f_kD", "f_kC", "f_kDC", "f_strat_ch", "f_strat_ch_final"))
+                f4.write("{0:17}{1:17}{2:21}\n".format("f_cr_0s", "f_cr_1s", "optim_solut"))
 
 
             if i == 0:
@@ -749,6 +737,9 @@ class MainWindow(QMainWindow):
 
                 if self.is_multi_run:
                     statistics.write_stats_to_file_a(f3)
+                    if statistics.max_f_C_corr is not None:
+                        _iter, _ = statistics.max_f_C_corr
+                        self.automata.statistics[_iter].write_stats_to_file_a(f4)
                     stats_multirun_temp.append(statistics)
             if self.is_multi_run:
                 stats_multirun.append((i, stats_multirun_temp))

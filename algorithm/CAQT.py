@@ -23,7 +23,7 @@ class CAQT(QObject):
     def __init__(self, M_rows, N_cols, p_init_C, allC, allD, kD, kC, minK, maxK, num_of_iter,
                  payoff_C_C, payoff_C_D, payoff_D_C, payoff_D_D, is_sharing, synch_prob,
                  is_tournament, p_state_mut, p_strat_mut, p_0_neigh_mut, p_1_neigh_mut, is_debug, is_test1, is_test2,
-                 f, optimal_num1s, is_payoff_1, u, seed=None):
+                 f, optimal_num1s, is_payoff_1, u, is_multi_run=False, seed=None):
 
         super().__init__()
         self.statistics = None
@@ -92,8 +92,8 @@ class CAQT(QObject):
             self.cells = [(0, self.create_CA(self.p_init_C, self.allC, self.allD, self.kD, self.kC, self.minK, self.maxK))]
         else:
             self.cells = [(0, self.create_CA_debug())]
-        # self.evolution()
-        # self.statistics = self.calculate_statistics()
+        print(self.__dict__)
+
     def get_avg_payoff(self, iter):
         return self.avg_payoff[iter]
 

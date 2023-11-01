@@ -11,13 +11,17 @@ from algorithm.Statistics import Statistics
 import sys
 import copy
 import os
+import time
+from PySide6.QtCore import Signal, QObject
 
-class CA():
 
+class CA(QObject):
+    signal = Signal(float, float, float, float, float)
+    signal_finished = Signal()
     def __init__(self, M_rows, N_cols, p_init_C, allC, allD, kD, kC, minK, maxK, num_of_iter,
                  payoff_C_C, payoff_C_D, payoff_D_C, payoff_D_D, is_sharing, synch_prob,
                  is_tournament, p_state_mut, p_strat_mut, p_0_neigh_mut, p_1_neigh_mut, is_debug, is_test1, is_test2,
-                 f, optimal_num1s, is_payoff_1, u, is_multi_run, seed=None):
+                 f, optimal_num1s, is_payoff_1, u, is_multi_run=False, seed=None, is_LA=False):
 
         super().__init__()
         self.is_multi_run = is_multi_run
@@ -55,8 +59,8 @@ class CA():
         self.is_debug = is_debug
         self.is_test1 = is_test1
         self.is_test2 = is_test2
-        if is_multi_run:
-            self.f = f
+
+        self.f = f
 
         # competition type, if true - tournament competition, else roulette competition
         self.is_tournament = is_tournament
@@ -82,18 +86,32 @@ class CA():
 
         # (iter, f_strat_ch, f_strat_ch_final)
         self.misc_stats = [(0, 0, 0)]
+
         # save cells as a list o tuples (num_of_iter, numpy array of Cell instances)
+        if not is_LA:
+            if not self.is_debug:
+                self.cells = [(0, self.create_CA(self.p_init_C, self.allC, self.allD, self.kD, self.kC, self.minK, self.maxK))]
+            else:
+                self.cells = [(0, self.create_CA_debug())]
 
-        if not self.is_debug:
-            self.cells = [(0, self.create_CA(self.p_init_C, self.allC, self.allD, self.kD, self.kC, self.minK, self.maxK))]
-        else:
-            self.cells = [(0, self.create_CA_debug())]
-        # self.evolution()
+    # overrides __getstate__ method for pickling CA object in multiprocess mode
+    # signals from Qt cannot be pickled, and as they're not used in multirun mode they can be set to None in dictionary
+    def __getstate__(self):
+        odict = self.__dict__.copy()
+        dict = {'objectNameChanged': None, 'destroyed': None, 'signal': None, 'signal_finished': None}
+        odict.update(dict)
+        return odict
 
-        # self.statistics = self.calculate_statistics()
-    def run(self):
-        # print("Thread run")
-        self.evolution()
+    # def __setstate__(self, state):
+    #     self.__dict__.update(state)
+    #     self.signal = Signal(float, float, float, float, float)
+    #     self.signal_finished = Signal()
+    #     self.objectNameChanged = Signal(str)
+    #     self.destroyed = Signal()
+    #     dict = {'signal': self.signal, 'signal_finished': self.signal_finished,
+    #     'objectNameChanged': self.objectNameChanged,'destroyed': self.destroyed}
+    #     self.__dict__.update(dict)
+
     def get_avg_payoff(self, iter):
         return self.avg_payoff[iter]
 
@@ -125,94 +143,96 @@ class CA():
                                    strategy=strategy, k=k)
                 id_ += 1
         if self.is_debug:
-            # print states
-            self.f.write("iter=0\nCA_states:\n")
-            for i in range(self.M_rows):
-                for j in range(self.N_cols):
-                    self.f.write("{0:<2}".format(cells[i, j].state))
-                self.f.write("\n")
-
-            # print strategies
-            self.f.write("\nCA_strat:\n")
-            for i in range(self.M_rows):
-                for j in range(self.N_cols):
-                    if cells[i, j].strategy == 1 or cells[i, j].strategy == 0:
-                        self.f.write("{0:<4}".format(cells[i, j].strategy))
-                    else:
-                        self.f.write("{0:1}{1:<3}".format(cells[i, j].strategy, cells[i, j].k))
-                self.f.write("\n")
-
-            # print kD strat
-            self.f.write("\nCA_kD_strat:\n")
-            for i in range(self.M_rows):
-                for j in range(self.N_cols):
-                    if cells[i, j].strategy == 2:
-                        self.f.write("{0:1}{1:<3}".format(cells[i, j].strategy, cells[i, j].k))
-                    else:
-                        self.f.write("{0:<4}".format(-1))
-                self.f.write("\n")
-
-            # print kC strat
-            self.f.write("\nCA_kC_strat:\n")
-            for i in range(self.M_rows):
-                for j in range(self.N_cols):
-                    if cells[i, j].strategy == 3:
-                        self.f.write("{0:1}{1:<3}".format(cells[i, j].strategy, cells[i, j].k))
-                    else:
-                        self.f.write("{0:<4}".format(-1))
-                self.f.write("\n")
-
-            # print kDC strat
-            self.f.write("\nCA_kDC_strat:\n")
-            for i in range(self.M_rows):
-                for j in range(self.N_cols):
-                    if cells[i, j].strategy == 4:
-                        self.f.write("{0:1}{1:<3}".format(cells[i, j].strategy, cells[i, j].k))
-                    else:
-                        self.f.write("{0:<4}".format(-1))
-                self.f.write("\n")
-
-            # print agent_glob_id
-            self.f.write("\nAgent_glob_ID:\n")
-            for i in range(self.M_rows):
-                for j in range(self.N_cols):
-                    self.f.write("{0:<5}".format(cells[i, j].id))
-                self.f.write("\n")
-
-            # print agent_i_j_id
-            self.f.write("\nAgent_i_j_ID:\n")
-            for i in range(1, self.M_rows - 1):
-                for j in range(1, self.N_cols - 1):
-                    self.f.write("{0:<5}{1:<5}".format(cells[i, j].y, cells[i, j].x))
-                    self.f.write("\n")
-
-            # print agent neighbours
-            self.f.write("\nAgent_neighbors:\n")
-            for i in range(1, self.M_rows - 1):
-                for j in range(1, self.N_cols - 1):
-                    self.f.write("{0:<5}{1:<5}{2:<5}{3:<5}".format(cells[i - 1, j].id, cells[i - 1, j + 1].id,
-                                                                   cells[i, j + 1].id, cells[i + 1, j + 1].id))
-                    self.f.write("{0:<5}{1:<5}{2:<5}{3:<5}".format(cells[i + 1, j].id, cells[i + 1, j - 1].id,
-                                                                   cells[i, j - 1].id, cells[i - 1, j - 1].id))
-                    self.f.write("\n")
-
-            self.f.write("\nkD:\n")
-            self.f.write("1 0 0 0 0 0 0 0 0\n1 1 0 0 0 0 0 0 0\n1 1 1 0 0 0 0 0 0\n1 1 1 1 0 0 0 0 0\n")
-            self.f.write("1 1 1 1 1 0 0 0 0\n1 1 1 1 1 1 0 0 0\n1 1 1 1 1 1 1 0 0\n1 1 1 1 1 1 1 1 0\n")
-            self.f.write("1 1 1 1 1 1 1 1 1\n")
-
-            self.f.write("\nkC:\n")
-            self.f.write("0 0 0 0 0 0 0 0 1\n0 0 0 0 0 0 0 1 1\n0 0 0 0 0 0 1 1 1\n0 0 0 0 0 1 1 1 1\n")
-            self.f.write("0 0 0 0 1 1 1 1 1\n0 0 0 1 1 1 1 1 1\n0 0 1 1 1 1 1 1 1\n0 1 1 1 1 1 1 1 1\n")
-            self.f.write("1 1 1 1 1 1 1 1 1\n")
-
-            self.f.write("\nkDC:\n")
-            self.f.write("0 1 1 1 1 1 1 1 1\n0 0 1 1 1 1 1 1 1\n0 0 0 1 1 1 1 1 1\n0 0 0 0 1 1 1 1 1\n")
-            self.f.write("0 0 0 0 0 1 1 1 1\n0 0 0 0 0 0 1 1 1\n0 0 0 0 0 0 0 1 1\n0 0 0 0 0 0 0 0 1\n")
-            self.f.write("0 0 0 0 0 0 0 0 0\n")
+            self.print_create_CA_debug(cells)
 
         return cells
 
+    def print_create_CA_debug(self, cells):
+        # print states
+        self.f.write("iter=0\nCA_states:\n")
+        for i in range(self.M_rows):
+            for j in range(self.N_cols):
+                self.f.write("{0:<2}".format(cells[i, j].state))
+            self.f.write("\n")
+
+        # print strategies
+        self.f.write("\nCA_strat:\n")
+        for i in range(self.M_rows):
+            for j in range(self.N_cols):
+                if cells[i, j].strategy == 1 or cells[i, j].strategy == 0:
+                    self.f.write("{0:<4}".format(cells[i, j].strategy))
+                else:
+                    self.f.write("{0:1}{1:<3}".format(cells[i, j].strategy, cells[i, j].k))
+            self.f.write("\n")
+
+        # print kD strat
+        self.f.write("\nCA_kD_strat:\n")
+        for i in range(self.M_rows):
+            for j in range(self.N_cols):
+                if cells[i, j].strategy == 2:
+                    self.f.write("{0:1}{1:<3}".format(cells[i, j].strategy, cells[i, j].k))
+                else:
+                    self.f.write("{0:<4}".format(-1))
+            self.f.write("\n")
+
+        # print kC strat
+        self.f.write("\nCA_kC_strat:\n")
+        for i in range(self.M_rows):
+            for j in range(self.N_cols):
+                if cells[i, j].strategy == 3:
+                    self.f.write("{0:1}{1:<3}".format(cells[i, j].strategy, cells[i, j].k))
+                else:
+                    self.f.write("{0:<4}".format(-1))
+            self.f.write("\n")
+
+        # print kDC strat
+        self.f.write("\nCA_kDC_strat:\n")
+        for i in range(self.M_rows):
+            for j in range(self.N_cols):
+                if cells[i, j].strategy == 4:
+                    self.f.write("{0:1}{1:<3}".format(cells[i, j].strategy, cells[i, j].k))
+                else:
+                    self.f.write("{0:<4}".format(-1))
+            self.f.write("\n")
+
+        # print agent_glob_id
+        self.f.write("\nAgent_glob_ID:\n")
+        for i in range(self.M_rows):
+            for j in range(self.N_cols):
+                self.f.write("{0:<5}".format(cells[i, j].id))
+            self.f.write("\n")
+
+        # print agent_i_j_id
+        self.f.write("\nAgent_i_j_ID:\n")
+        for i in range(1, self.M_rows - 1):
+            for j in range(1, self.N_cols - 1):
+                self.f.write("{0:<5}{1:<5}".format(cells[i, j].y, cells[i, j].x))
+                self.f.write("\n")
+
+        # print agent neighbours
+        self.f.write("\nAgent_neighbors:\n")
+        for i in range(1, self.M_rows - 1):
+            for j in range(1, self.N_cols - 1):
+                self.f.write("{0:<5}{1:<5}{2:<5}{3:<5}".format(cells[i - 1, j].id, cells[i - 1, j + 1].id,
+                                                               cells[i, j + 1].id, cells[i + 1, j + 1].id))
+                self.f.write("{0:<5}{1:<5}{2:<5}{3:<5}".format(cells[i + 1, j].id, cells[i + 1, j - 1].id,
+                                                               cells[i, j - 1].id, cells[i - 1, j - 1].id))
+                self.f.write("\n")
+
+        self.f.write("\nkD:\n")
+        self.f.write("1 0 0 0 0 0 0 0 0\n1 1 0 0 0 0 0 0 0\n1 1 1 0 0 0 0 0 0\n1 1 1 1 0 0 0 0 0\n")
+        self.f.write("1 1 1 1 1 0 0 0 0\n1 1 1 1 1 1 0 0 0\n1 1 1 1 1 1 1 0 0\n1 1 1 1 1 1 1 1 0\n")
+        self.f.write("1 1 1 1 1 1 1 1 1\n")
+
+        self.f.write("\nkC:\n")
+        self.f.write("0 0 0 0 0 0 0 0 1\n0 0 0 0 0 0 0 1 1\n0 0 0 0 0 0 1 1 1\n0 0 0 0 0 1 1 1 1\n")
+        self.f.write("0 0 0 0 1 1 1 1 1\n0 0 0 1 1 1 1 1 1\n0 0 1 1 1 1 1 1 1\n0 1 1 1 1 1 1 1 1\n")
+        self.f.write("1 1 1 1 1 1 1 1 1\n")
+
+        self.f.write("\nkDC:\n")
+        self.f.write("0 1 1 1 1 1 1 1 1\n0 0 1 1 1 1 1 1 1\n0 0 0 1 1 1 1 1 1\n0 0 0 0 1 1 1 1 1\n")
+        self.f.write("0 0 0 0 0 1 1 1 1\n0 0 0 0 0 0 1 1 1\n0 0 0 0 0 0 0 1 1\n0 0 0 0 0 0 0 0 1\n")
+        self.f.write("0 0 0 0 0 0 0 0 0\n")
     def create_CA(self, p_init_C, allC, allD, kD, kC, minK, maxK):
         CA_cells = np.empty((self.M_rows, self.N_cols), dtype=object)
         id_ = 1
@@ -247,6 +267,7 @@ class CA():
         b3 = kD + b2
         b4 = kC + b3
         x = random.random()
+
         if x <= b1:
             strategy = 1
             k = -1
@@ -267,8 +288,13 @@ class CA():
             k = y
         return strategy, k
 
+
     def evolution(self):
-        print("process started PID: %d" % os.getpid())
+        if self.is_multi_run:
+            print("process started PID: %d" % os.getpid())
+        else:
+            print("thread started")
+
         sum = 0
         for k in range(0, self.num_of_iter, self.u):
 
@@ -284,9 +310,6 @@ class CA():
             for u in range(self.u):
                 _, cells = self.cells[k]
                 sum_payoff_temp = 0
-                if self.is_test1:
-                    self.f.write("\niter = " + str(k))
-                    self.f.write("\nCALCULATE C*/D*\n")
                 # decide action
                 for i in range(1, self.M_rows - 1):
                     for j in range(1, self.N_cols - 1):
@@ -296,82 +319,22 @@ class CA():
                             cells[i, j].group_of_1s = self.is_group_of_1s(cells, i, j)
                             if not cells[i, j].group_of_1s:
                                 cells[i, j].group_of_0s = self.is_group_of_0s(cells, i, j)
-                        if self.is_test1:
-                            self.f.write("\nid={0:<3}\n".format(cells[i, j].id))
-                            self.f.write("My_neighb_states:\n")
-                            self.f.write("{0:2}".format(cells[i, j].state))
-                            self.f.write("{0:2}{1:2}{2:2}{3:2}".format(cells[i - 1, j].state, cells[i - 1, j + 1].state,
-                                                                       cells[i, j + 1].state,
-                                                                       cells[i + 1, j + 1].state))
-                            self.f.write(
-                                "{0:2}{1:2}{2:2}{3:2}\n".format(cells[i + 1, j].state, cells[i + 1, j - 1].state,
-                                                                cells[i, j - 1].state, cells[i - 1, j - 1].state))
                         # decide whether cell will be changing strategy in this iteration with synch_prob probability
                         self.is_cell_changing_strategy(cells[i, j])
-                if self.is_test1:
-                    self.f.write("\nCA_actions:\n")
-                    for i in range(self.M_rows):
-                        for j in range(self.N_cols):
-                            self.f.write("{0:<3}".format(cells[i, j].action))
-                        self.f.write("\n")
-                    self.f.write("\nGroup_8_0s:\n")
-                    for i in range(1, self.M_rows - 1):
-                        for j in range(1, self.N_cols - 1):
-                            if cells[i, j].group_of_0s:
-                                self.f.write("{0:<3}".format(1))
-                            else:
-                                self.f.write("{0:<3}".format(0))
-                        self.f.write("\n")
-
-                    self.f.write("\nGroup_8_1s:\n")
-                    for i in range(1, self.M_rows - 1):
-                        for j in range(1, self.N_cols - 1):
-                            if cells[i, j].group_of_1s:
-                                self.f.write("{0:<3}".format(1))
-                            else:
-                                self.f.write("{0:<3}".format(0))
-                        self.f.write("\n")
 
                 # calculate payoffs
-
                 for i in range(1, self.M_rows - 1):
                     for j in range(1, self.N_cols - 1):
                         if self.is_payoff_1:
                             self.calculate_payoff_1(cells, i, j)
                         else:
-                            if self.is_test1 and self.is_debug:
-                                self.f.write("PLAY_GAME_2\n")
                             self.calculate_payoff_2(cells, i, j)
                         cells[i, j].avg_payoff /= u_
                         sum_payoff_temp += cells[i, j].avg_payoff
 
+                # debug prints
                 if self.is_test1:
-                    # print payoffs
-                    avg_payoff_temp = sum_payoff_temp / ((self.M_rows - 2) * (self.N_cols - 2))
-                    self.f.write("\nPayoffs:\n")
-                    for i in range(1, self.M_rows - 1):
-                        for j in range(1, self.N_cols - 1):
-                            self.f.write(
-                                "{0:5.1f}{1:5.1f}{2:5.1f}{3:5.1f}".format(cells[i, j].payoffs[1],
-                                                                          cells[i, j].payoffs[2],
-                                                                          cells[i, j].payoffs[4],
-                                                                          cells[i, j].payoffs[7]))
-                            self.f.write(
-                                "{0:5.1f}{1:5.1f}{2:5.1f}{3:5.1f}\n".format(cells[i, j].payoffs[6],
-                                                                            cells[i, j].payoffs[5],
-                                                                            cells[i, j].payoffs[3],
-                                                                            cells[i, j].payoffs[0]))
-                    if not self.is_sharing:
-                        self.f.write("\nCumul_payoffs:\n")
-                        for i in range(1, self.M_rows - 1):
-                            for j in range(1, self.N_cols - 1):
-                                self.f.write("{0:<5.1f}\n".format(cells[i, j].sum_payoff))
-
-                        self.f.write("\nCumul_avg:\n")
-                        for i in range(1, self.M_rows - 1):
-                            for j in range(1, self.N_cols - 1):
-                                self.f.write("{0:<5.4f}\n".format(cells[i, j].avg_payoff))
-                        self.f.write("\nav_pay = {0:<5.4f}\n".format(avg_payoff_temp))
+                    self.print_test1_1(k, cells,  sum_payoff_temp)
 
                 # redistribute payoffs
                 if self.is_sharing and u_ == self.u:
@@ -382,33 +345,9 @@ class CA():
                             self.redistribute_payoff(cells, cells_temp, i, j)
                             sum_payoff_temp += cells[i, j].avg_payoff
 
+                # more debug prints
                 if self.is_test1 and self.is_sharing:
-                    # print payoffs
-                    self.f.write("\nPayoffs after redistribution:\n")
-                    for i in range(1, self.M_rows - 1):
-                        for j in range(1, self.N_cols - 1):
-                            self.f.write(
-                                "{0:5.1f}{1:5.1f}{2:5.1f}{3:5.1f}".format(cells[i, j].payoffs[1],
-                                                                          cells[i, j].payoffs[2],
-                                                                          cells[i, j].payoffs[4],
-                                                                          cells[i, j].payoffs[7]))
-                            self.f.write(
-                                "{0:5.1f}{1:5.1f}{2:5.1f}{3:5.1f}\n".format(cells[i, j].payoffs[6],
-                                                                            cells[i, j].payoffs[5],
-                                                                            cells[i, j].payoffs[3],
-                                                                            cells[i, j].payoffs[0]))
-
-                    self.f.write("\nCumul_payoffs:\n")
-                    for i in range(1, self.M_rows - 1):
-                        for j in range(1, self.N_cols - 1):
-                            self.f.write("{0:<5.1f}\n".format(cells[i, j].sum_payoff))
-
-                    self.f.write("\nCumul_avg:\n")
-                    for i in range(1, self.M_rows - 1):
-                        for j in range(1, self.N_cols - 1):
-                            self.f.write("{0:<5.4f}\n".format(cells[i, j].avg_payoff))
-                    _, avg_payoff = self.avg_payoff[k]
-                    self.f.write("\nav_pay = {0:<5.4f}\n".format(avg_payoff))
+                    self.print_test1_2(k, cells, sum_payoff_temp)
 
                 cells_temp = copy.deepcopy(cells)
                 self.avg_payoff.append((k, sum_payoff_temp / ((self.M_rows - 2) * (self.N_cols - 2))))
@@ -456,62 +395,7 @@ class CA():
                                     self.mutate_state(cells_temp[i, j])
 
                     if self.is_test2:
-                        # winner_agent
-                        self.f.write("\nWinner agent:\n")
-                        for i in range(1, self.M_rows - 1):
-                            for j in range(1, self.N_cols - 1):
-                                self.f.write("{0:<4}\n".format(cells[i, j].winner_agent))
-
-                        # CA start
-                        self.f.write("\nCA_strat:\n")
-                        for i in range(self.M_rows):
-                            for j in range(self.N_cols):
-                                if cells_temp[i, j].strategy == 1 or cells_temp[i, j].strategy == 0:
-                                    self.f.write("{0:<4}".format(cells_temp[i, j].strategy))
-                                else:
-                                    self.f.write("{0:1}{1:<3}".format(cells_temp[i, j].strategy, cells_temp[i, j].k))
-                            self.f.write("\n")
-
-                        # print kD strat
-                        self.f.write("\nCA_kD_strat:\n")
-                        for i in range(self.M_rows):
-                            for j in range(self.N_cols):
-                                if cells_temp[i, j].strategy == 2:
-                                    self.f.write("{0:1}{1:<3}".format(cells_temp[i, j].strategy, cells_temp[i, j].k))
-                                else:
-                                    self.f.write("{0:<4}".format(-1))
-                            self.f.write("\n")
-
-                        # print kC strat
-                        self.f.write("\nCA_kC_strat:\n")
-                        for i in range(self.M_rows):
-                            for j in range(self.N_cols):
-                                if cells_temp[i, j].strategy == 3:
-                                    self.f.write("{0:1}{1:<3}".format(cells_temp[i, j].strategy, cells_temp[i, j].k))
-                                else:
-                                    self.f.write("{0:<4}".format(-1))
-                            self.f.write("\n")
-
-                        # print kDC strat
-                        self.f.write("\nCA_kDC_strat:\n")
-                        for i in range(self.M_rows):
-                            for j in range(self.N_cols):
-                                if cells_temp[i, j].strategy == 4:
-                                    self.f.write("{0:1}{1:<3}".format(cells_temp[i, j].strategy, cells_temp[i, j].k))
-                                else:
-                                    self.f.write("{0:<4}".format(-1))
-                            self.f.write("\n")
-                        f_strat_ch = change_strat_count / ((self.M_rows - 2) * (self.N_cols - 2))
-                        f_strat_ch_final = change_strat_count_final / ((self.M_rows - 2) * (self.N_cols - 2))
-                        self.f.write("\nf_start_ch = {0:4.3f}\n".format(f_strat_ch))
-                        self.f.write("\nf_start_ch_fin = {0:4.3f}\n".format(f_strat_ch_final))
-
-                        # print states
-                        self.f.write("\nCA_states:\n")
-                        for i in range(self.M_rows):
-                            for j in range(self.N_cols):
-                                self.f.write("{0:<2}".format(cells_temp[i, j].state))
-                            self.f.write("\n")
+                        self.print_test2(cells, cells_temp, change_strat_count, change_strat_count_final)
 
                     for i in range(1, self.M_rows - 1):
                         for j in range(1, self.N_cols - 1):
@@ -519,7 +403,6 @@ class CA():
                             if not cells_temp[i, j].group_of_1s:
                                 cells_temp[i, j].group_of_0s = self.is_group_of_0s(cells_temp, i, j)
                     # mutation when cell is in group od 1s or group of 0s
-                    # (shouldn't it be done earlier?)
                     for i in range(1, self.M_rows - 1):
                         for j in range(1, self.N_cols - 1):
                             if cells_temp[i, j].group_of_0s:
@@ -545,10 +428,150 @@ class CA():
 
                 self.misc_stats.append((k + 1, change_strat_count, change_strat_count_final))
                 self.cells.append((k + 1, cells_temp))
+                if not self.is_multi_run:
+                    self.calculate_stats_for_graph(k)
+                    time.sleep(0.05)
                 k += 1
+        if not self.is_multi_run:
+            self.calculate_stats_for_graph(k)
         self.statistics = self.calculate_statistics()
-        print("process finished PID: %d" % os.getpid())
+        if self.is_multi_run:
+            print("process finished PID: %d" % os.getpid())
+        else:
+            print("thread finished")
+            self.signal_finished.emit()
 
+    def print_test1_1(self, k, cells, sum_payoff_temp):
+        self.f.write("\niter = " + str(k))
+        self.f.write("\nCALCULATE C*/D*\n")
+        for i in range(1, self.M_rows - 1):
+            for j in range(1, self.N_cols - 1):
+                self.f.write("\nid={0:<3}\n".format(cells[i, j].id))
+                self.f.write("My_neighb_states:\n")
+                self.f.write("{0:2}".format(cells[i, j].state))
+                self.f.write("{0:2}{1:2}{2:2}{3:2}".format(cells[i - 1, j].state, cells[i - 1, j + 1].state,
+                                                           cells[i, j + 1].state,
+                                                           cells[i + 1, j + 1].state))
+                self.f.write(
+                    "{0:2}{1:2}{2:2}{3:2}\n".format(cells[i + 1, j].state, cells[i + 1, j - 1].state,
+                                                    cells[i, j - 1].state, cells[i - 1, j - 1].state))
+        self.f.write("\nCA_actions:\n")
+        for i in range(self.M_rows):
+            for j in range(self.N_cols):
+                self.f.write("{0:<3}".format(cells[i, j].action))
+            self.f.write("\n")
+        self.f.write("\nGroup_8_0s:\n")
+        for i in range(1, self.M_rows - 1):
+            for j in range(1, self.N_cols - 1):
+                if cells[i, j].group_of_0s:
+                    self.f.write("{0:<3}".format(1))
+                else:
+                    self.f.write("{0:<3}".format(0))
+            self.f.write("\n")
+
+        self.f.write("\nGroup_8_1s:\n")
+        for i in range(1, self.M_rows - 1):
+            for j in range(1, self.N_cols - 1):
+                if cells[i, j].group_of_1s:
+                    self.f.write("{0:<3}".format(1))
+                else:
+                    self.f.write("{0:<3}".format(0))
+            self.f.write("\n")
+
+        if not self.is_payoff_1:
+            self.f.write("PLAY_GAME_2\n")
+
+        avg_payoff_temp = sum_payoff_temp / ((self.M_rows - 2) * (self.N_cols - 2))
+        self.f.write("\nPayoffs:\n")
+        self.print_payoffs(cells,avg_payoff_temp)
+
+    def print_test1_2(self, k, cells, sum_payoff_temp):
+        avg_payoff_temp = sum_payoff_temp / ((self.M_rows - 2) * (self.N_cols - 2))
+        self.f.write("\nPayoffs after redistribution:\n")
+        self.print_payoffs(cells, avg_payoff_temp)
+
+    def print_payoffs(self, cells,avg_payoff_temp):
+        for i in range(1, self.M_rows - 1):
+            for j in range(1, self.N_cols - 1):
+                self.f.write(
+                    "{0:5.1f}{1:5.1f}{2:5.1f}{3:5.1f}".format(cells[i, j].payoffs[1],
+                                                              cells[i, j].payoffs[2],
+                                                              cells[i, j].payoffs[4],
+                                                              cells[i, j].payoffs[7]))
+                self.f.write(
+                    "{0:5.1f}{1:5.1f}{2:5.1f}{3:5.1f}\n".format(cells[i, j].payoffs[6],
+                                                                cells[i, j].payoffs[5],
+                                                                cells[i, j].payoffs[3],
+                                                                cells[i, j].payoffs[0]))
+        if not self.is_sharing:
+            self.f.write("\nCumul_payoffs:\n")
+            for i in range(1, self.M_rows - 1):
+                for j in range(1, self.N_cols - 1):
+                    self.f.write("{0:<5.1f}\n".format(cells[i, j].sum_payoff))
+
+            self.f.write("\nCumul_avg:\n")
+            for i in range(1, self.M_rows - 1):
+                for j in range(1, self.N_cols - 1):
+                    self.f.write("{0:<5.4f}\n".format(cells[i, j].avg_payoff))
+            self.f.write("\nav_pay = {0:<5.4f}\n".format(avg_payoff_temp))
+
+    def print_test2(self,cells, cells_temp, change_strat_count, change_strat_count_final):
+        # winner_agent
+        self.f.write("\nWinner agent:\n")
+        for i in range(1, self.M_rows - 1):
+            for j in range(1, self.N_cols - 1):
+                self.f.write("{0:<4}\n".format(cells[i, j].winner_agent))
+
+        # CA start
+        self.f.write("\nCA_strat:\n")
+        for i in range(self.M_rows):
+            for j in range(self.N_cols):
+                if cells_temp[i, j].strategy == 1 or cells_temp[i, j].strategy == 0:
+                    self.f.write("{0:<4}".format(cells_temp[i, j].strategy))
+                else:
+                    self.f.write("{0:1}{1:<3}".format(cells_temp[i, j].strategy, cells_temp[i, j].k))
+            self.f.write("\n")
+
+        # print kD strat
+        self.f.write("\nCA_kD_strat:\n")
+        for i in range(self.M_rows):
+            for j in range(self.N_cols):
+                if cells_temp[i, j].strategy == 2:
+                    self.f.write("{0:1}{1:<3}".format(cells_temp[i, j].strategy, cells_temp[i, j].k))
+                else:
+                    self.f.write("{0:<4}".format(-1))
+            self.f.write("\n")
+
+        # print kC strat
+        self.f.write("\nCA_kC_strat:\n")
+        for i in range(self.M_rows):
+            for j in range(self.N_cols):
+                if cells_temp[i, j].strategy == 3:
+                    self.f.write("{0:1}{1:<3}".format(cells_temp[i, j].strategy, cells_temp[i, j].k))
+                else:
+                    self.f.write("{0:<4}".format(-1))
+            self.f.write("\n")
+
+        # print kDC strat
+        self.f.write("\nCA_kDC_strat:\n")
+        for i in range(self.M_rows):
+            for j in range(self.N_cols):
+                if cells_temp[i, j].strategy == 4:
+                    self.f.write("{0:1}{1:<3}".format(cells_temp[i, j].strategy, cells_temp[i, j].k))
+                else:
+                    self.f.write("{0:<4}".format(-1))
+            self.f.write("\n")
+        f_strat_ch = change_strat_count / ((self.M_rows - 2) * (self.N_cols - 2))
+        f_strat_ch_final = change_strat_count_final / ((self.M_rows - 2) * (self.N_cols - 2))
+        self.f.write("\nf_start_ch = {0:4.3f}\n".format(f_strat_ch))
+        self.f.write("\nf_start_ch_fin = {0:4.3f}\n".format(f_strat_ch_final))
+
+        # print states
+        self.f.write("\nCA_states:\n")
+        for i in range(self.M_rows):
+            for j in range(self.N_cols):
+                self.f.write("{0:<2}".format(cells_temp[i, j].state))
+            self.f.write("\n")
 
     # mutation of cell state by negating current state
     def mutate_state(self, cell):
@@ -799,6 +822,8 @@ class CA():
                         cells[i, j].sum_payoff += self.payoff_C_D
                     m += 1
         cells[i, j].avg_payoff = cells[i, j].sum_payoff / 8
+        cells[i, j].sum_payoff = round(cells[i, j].sum_payoff, 4)
+        cells[i, j].avg_payoff = round(cells[i, j].avg_payoff, 4)
 
     def is_group_of_0s(self, cells, i, j):
         if cells[i, j].state == 0:
@@ -891,9 +916,12 @@ class CA():
         _, num_of_strat_change, num_of_strat_change_final = self.misc_stats[iter]
         f_strat_ch = num_of_strat_change / num_of_cells
         f_strat_ch_final = num_of_strat_change_final / num_of_cells
+        self.signal.emit(f_C, f_C_corr, av_sum, f_strat_ch, f_strat_ch_final)
     def calculate_statistics(self):
 
         statistics = []
+        if self.is_multi_run:
+            max_f_C_corr = (0, 0)
         for k, cells in self.cells:
             num_of_cells = 0
             num_of_C = 0
@@ -995,6 +1023,9 @@ class CA():
             # calculate the stats
             f_C = num_of_C / num_of_cells
             f_C_corr = num_of_C_corr / self.optimal_num_1s
+            if self.is_multi_run:
+                if f_C_corr > max_f_C_corr[1]:
+                    max_f_C_corr = (k, f_C_corr)
             iter1, av_sum = self.avg_payoff[k]
             f_allC = num_of_allC / num_of_cells
             f_allD = num_of_allD / num_of_cells
@@ -1048,9 +1079,18 @@ class CA():
 
             optim_solut = self.optimal_num_1s / ((self.M_rows - 2) * (self.N_cols - 2))
             # save stats as list of Statistics class instances
-            statistics.append(Statistics(k, f_C, f_C_corr, av_sum, f_allC, f_allD, f_kD, f_kC,
+
+            if not k == len(self.cells) - 1 or not self.is_multi_run:
+                statistics.append(Statistics(k, f_C, f_C_corr, av_sum, f_allC, f_allD, f_kD, f_kC,
                                          f_kDC, f_strat_ch, f_0D, f_1D, f_2D, f_3D, f_4D, f_5D, f_6D,
                                          f_7D, f_8D, f_0C, f_1C, f_2C, f_3C, f_4C, f_5C, f_6C, f_7C, f_8C,
                                          f_0DC, f_1DC, f_2DC, f_3DC, f_4DC, f_5DC, f_6DC, f_7DC, f_8DC,
                                          f_strat_ch_final, f_cr_0s, f_cr_1s, optim_solut))
+            else:
+                statistics.append(Statistics(k, f_C, f_C_corr, av_sum, f_allC, f_allD, f_kD, f_kC,
+                                             f_kDC, f_strat_ch, f_0D, f_1D, f_2D, f_3D, f_4D, f_5D, f_6D,
+                                             f_7D, f_8D, f_0C, f_1C, f_2C, f_3C, f_4C, f_5C, f_6C, f_7C, f_8C,
+                                             f_0DC, f_1DC, f_2DC, f_3DC, f_4DC, f_5DC, f_6DC, f_7DC, f_8DC,
+                                             f_strat_ch_final, f_cr_0s, f_cr_1s, optim_solut, max_f_C_corr))
+
         return statistics
