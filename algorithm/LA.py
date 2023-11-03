@@ -1,5 +1,5 @@
 # Learning automaton
-import CA
+from algorithm.CA import CA
 class LA(CA):
     def __init__(self, M_rows, N_cols, p_init_C, allC, allD, kD, kC, minK, maxK, num_of_iter,
                  payoff_C_C, payoff_C_D, payoff_D_C, payoff_D_D, is_sharing, synch_prob,
@@ -28,10 +28,14 @@ class LA(CA):
             self.strategies.append(3)
         if self.kDC > 0:
             self.strategies.append(4)
-
+        self.cells = []
 
     def automaton_init(self):
         self.init_cells_memory()
 
 
-    def init_cells_memory(self, CA):
+    def init_cells_memory(self):
+        for i in range(self.h):
+            cells = self.create_CA(0.5, self.allC, self.allD, self.kD, self.kC, self.minK, self.maxK)
+
+

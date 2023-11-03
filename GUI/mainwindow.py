@@ -29,6 +29,7 @@ from DATA.synch import Synch
 from DATA.payoff import Payoff
 
 from algorithm.CA import CA
+from algorithm.LA import LA
 from GUI.animation import Animation
 from algorithm.CAQT import CAQT
 
@@ -141,7 +142,8 @@ class MainWindow(QMainWindow):
             seed = self.seed.customSeed
         else:
             seed = None
-        self.automata = CA(rows, cols, self.data.canvas.p_init_C, self.data.strategies.all_C,
+        if not self.canvas.is_LA:
+             self.automata = CA(rows, cols, self.data.canvas.p_init_C, self.data.strategies.all_C,
                            self.data.strategies.all_D, self.data.strategies.k_D, self.data.strategies.k_C,
                            self.data.strategies.k_var_min, self.data.strategies.k_var_max,
                            self.data.iterations.num_of_iter,
@@ -154,6 +156,23 @@ class MainWindow(QMainWindow):
                            self.data.debugger.isDebug, self.data.debugger.is_test1, self.data.debugger.is_test2, self.f,
                            self.data.synch.optimal_num_1s, self.data.synch.is_payoff_1, self.data.synch.u, self.is_multi_run,
                            seed)
+        else:
+            self.automata = LA(rows, cols, self.data.canvas.p_init_C, self.data.strategies.all_C,
+                               self.data.strategies.all_D, self.data.strategies.k_D, self.data.strategies.k_C,
+                               self.data.strategies.k_var_min, self.data.strategies.k_var_max,
+                               self.data.iterations.num_of_iter,
+                               self.data.payoff.d, self.data.payoff.c, self.data.payoff.b, self.data.payoff.a,
+                               self.canvas.isSharing,
+                               self.data.synch.synch_prob, self.data.competition.isTournament,
+                               self.data.mutations.p_state_mut,
+                               self.data.mutations.p_strat_mut, self.data.mutations.p_0_neighb_mut,
+                               self.data.mutations.p_1_neighb_mut,
+                               self.data.debugger.isDebug, self.data.debugger.is_test1, self.data.debugger.is_test2,
+                               self.f,
+                               self.data.synch.optimal_num_1s, self.data.synch.is_payoff_1, self.data.synch.u,
+                               self.canvas.memory_h, self.canvas.epsilon,
+                               self.is_multi_run,
+                               seed)
 
         self.automata.moveToThread(self.automata_thread)
         self.automata.signal.connect(self.update_graph_async)
@@ -187,7 +206,7 @@ class MainWindow(QMainWindow):
                             self.data.mutations.p_1_neighb_mut,
                             self.data.debugger.isDebug, self.data.debugger.is_test1, self.data.debugger.is_test2, 1,
                             self.data.synch.optimal_num_1s, self.data.synch.is_payoff_1, self.data.synch.u, self.is_multi_run,
-                            seed)))
+                            seed, self.canvas.is_LA, self.canvas.memory_h, self.canvas.epsilon)))
 
 
 
@@ -218,7 +237,7 @@ class MainWindow(QMainWindow):
         cellHeight = self.roundDivision(300, rows)
         width = cellWidth * cols + 2
         height = cellHeight * rows + 2
-        self.ui.graphicsView_CA.setGeometry(QRect(490, 80, width, height))
+        self.ui.graphicsView_CA.setGeometry(QRect(540, 80, width, height))
         self.ui.graphicsView_CA.horizontalHeader().setDefaultSectionSize(cellWidth)
         self.ui.graphicsView_CA.verticalHeader().setDefaultSectionSize(cellHeight)
         self.ui.pushButton_start_anim.setDisabled(True)
@@ -452,9 +471,12 @@ class MainWindow(QMainWindow):
             return
 
         self.canvas = Canvas(self.ui.spinBox_Mrows.value(),
-                                self.ui.spinBox_Ncols.value(),
-                                self.ui.doubleSpinBox_p_init_C.value(),
-                                self.ui.checkBox_sharing.isChecked())
+                            self.ui.spinBox_Ncols.value(),
+                            self.ui.doubleSpinBox_p_init_C.value(),
+                            self.ui.checkBox_sharing.isChecked(),
+                            self.ui.checkBox_LA.isChecked(),
+                            self.ui.spinBox_memoryh.value(),
+                            self.ui.spinBox_epsilon.value())
 
         self.competition = Competition(self.ui.radioButton_roulette.isChecked(),
                                         self.ui.radioButton_tournament.isChecked())
@@ -882,9 +904,9 @@ def run_process(rows, cols, p_init_C, all_C,
                 p_strat_mut, p_0_neighb_mut,
                 p_1_neighb_mut,
                 isDebug, is_test1, is_test2, f,
-                optimal_num_1s, is_payoff_1, u, is_multi_run, seed):
-
-    automata_multirun = (CA(rows, cols, p_init_C, all_C,
+                optimal_num_1s, is_payoff_1, u, is_multi_run, seed, is_LA, memoryh, epsilon):
+    if not is_LA:
+        automata_multirun = (CA(rows, cols, p_init_C, all_C,
                                  all_D, k_D, k_C,
                                  k_var_min, k_var_max,
                                  num_of_iter,
@@ -896,6 +918,20 @@ def run_process(rows, cols, p_init_C, all_C,
                                  p_1_neighb_mut,
                                  isDebug, is_test1, is_test2, f,
                                  optimal_num_1s, is_payoff_1, u, is_multi_run,
+                                 seed))
+    else:
+        automata_multirun = (LA(rows, cols, p_init_C, all_C,
+                                 all_D, k_D, k_C,
+                                 k_var_min, k_var_max,
+                                 num_of_iter,
+                                 d, c, b, a,
+                                 isSharing,
+                                 synch_prob, isTournament,
+                                 p_state_mut,
+                                 p_strat_mut, p_0_neighb_mut,
+                                 p_1_neighb_mut,
+                                 isDebug, is_test1, is_test2, f,
+                                 optimal_num_1s, is_payoff_1, u, memoryh, epsilon, is_multi_run,
                                  seed))
     automata_multirun.evolution()
     return automata_multirun

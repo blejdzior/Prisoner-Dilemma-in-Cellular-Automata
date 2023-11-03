@@ -45,6 +45,8 @@ class Cell():
         self.sum_payoff = 0
         self.avg_payoff = 0
 
+        self.memory = []
+
 
 
     def __deepcopy__(self, memodict={}):
@@ -52,6 +54,7 @@ class Cell():
                     self.change_strategy)
         cell.avg_payoff = self.avg_payoff
         cell.sum_payoff = self.sum_payoff
+        cell.memory = self.memory
         return cell
 
     def __init_subclass__(cls) -> None:
