@@ -295,7 +295,6 @@ class CA(QObject):
         else:
             print("thread started")
 
-        sum = 0
         for k in range(0, self.num_of_iter, self.u):
 
             _, cells = self.cells[k]
@@ -315,10 +314,10 @@ class CA(QObject):
                     for j in range(1, self.N_cols - 1):
                         if self.is_payoff_1:
                             cells[i, j].action = self.decide_action(cells, i, j)
-                        if k == 0:
-                            cells[i, j].group_of_1s = self.is_group_of_1s(cells, i, j)
-                            if not cells[i, j].group_of_1s:
-                                cells[i, j].group_of_0s = self.is_group_of_0s(cells, i, j)
+                        # if k == 0:
+                        #     cells[i, j].group_of_1s = self.is_group_of_1s(cells, i, j)
+                        #     if not cells[i, j].group_of_1s:
+                        #         cells[i, j].group_of_0s = self.is_group_of_0s(cells, i, j)
                         # decide whether cell will be changing strategy in this iteration with synch_prob probability
                         self.is_cell_changing_strategy(cells[i, j])
 

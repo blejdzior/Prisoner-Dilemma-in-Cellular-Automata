@@ -6,7 +6,7 @@ Created on Sat Apr 22 12:30:18 2023
 """
 # from PySide6.QtWidgets import QTableWidgetItem
 import numpy as np
-
+from queue import Queue
 class Cell():
     def __init__(self, _id, x, y, strategy = -1, k = -1, action = -1, state = -1, group_of_1s = False, group_of_0s = False, change_strategy = False):
         super().__init__()

@@ -683,6 +683,9 @@ class MainWindow(QMainWindow):
         f.write("\n#pay_off_1: " + str(self.data.synch.is_payoff_1))
         f.write("\n#pay_off_2: " + str(self.data.synch.is_payoff_2))
         f.write("\n#u: " + str(self.data.synch.u))
+        if self.canvas.is_LA:
+            f.write("\n#epsilon: " + str(self.canvas.epsilon))
+            f.write("\n#h: " + str(self.canvas.memory_h))
 
 
     def save_results(self):

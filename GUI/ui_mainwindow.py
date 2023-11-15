@@ -91,17 +91,18 @@ class Ui_MainWindow(object):
         self.label_memoryh.setGeometry(QRect(10, 10, 70, 20))
         self.spinBox_memoryh = QSpinBox(self.groupBox_LA)
         self.spinBox_memoryh.setGeometry(QRect(80, 10, 50, 20))
-        self.spinBox_memoryh.setMaximum(10)
+        self.spinBox_memoryh.setMaximum(10000)
         self.spinBox_memoryh.setMinimum(1)
-        self.spinBox_memoryh.setValue(4)
+        self.spinBox_memoryh.setValue(8)
 
         self.label_epsilon = QLabel(self.groupBox_LA)
         self.label_epsilon.setGeometry(QRect(10, 40, 50, 20))
         self.spinBox_epsilon = QDoubleSpinBox(self.groupBox_LA)
         self.spinBox_epsilon.setGeometry(QRect(80, 40, 50, 20))
         self.spinBox_epsilon.setMaximum(1)
-        self.spinBox_epsilon.setSingleStep(0.05)
-        self.spinBox_epsilon.setValue(0.05)
+        self.spinBox_epsilon.setDecimals(3)
+        self.spinBox_epsilon.setSingleStep(0.005)
+        self.spinBox_epsilon.setValue(0.005)
 
 
 
