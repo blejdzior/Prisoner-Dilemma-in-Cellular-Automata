@@ -56,6 +56,13 @@ class MainWindow(QMainWindow):
         self.isAnimationRunning = False
         self.visualization_mode = 0
 
+        # colors for state coloring, each for CA/LA, and payoff function.
+        self.orange = QColor(255, 100, 0)
+        self.blue = QColor(7, 7, 240)
+        self.green = QColor(18, 191, 15)
+        self.red = QColor(240, 7, 35)
+        self.color = None
+
         self.animation = Animation(0, 0, 0)
         self.animation.signal.connect(self.animation_signal_handler)
         self.animation.signal.connect(self.update_graph)
@@ -124,6 +131,10 @@ class MainWindow(QMainWindow):
             row, column = ix
             self.ui.graphicsView_CA.item(row, column).setBackground(QColor(R,G,B, opacity))
 
+    def changeCellsColor_QColor(self, selected, color):
+        for ix in selected:
+            row, column = ix
+            self.ui.graphicsView_CA.item(row, column).setBackground(color)
 
     def roundDivision(self, size, n):
         floor = math.floor(size / n)
@@ -227,12 +238,23 @@ class MainWindow(QMainWindow):
             self.automata = self.result[0].get()
         else:
              self.create_automata()
+        if self.canvas.is_LA:
+            if self.synch.is_payoff_1:
+                self.color = self.red
+            else:
+                self.color = self.green
+        else:
+            if self.synch.is_payoff_1:
+                self.color = self.orange
+            else:
+                self.color = self.blue
+
         k, cells = self.automata.cells[0]
         for n in range(rows):
             for m in range(cols):
                 self.ui.graphicsView_CA.setItem(n, m, QTableWidgetItem())
                 if cells[n, m].state == 1:
-                        self.ui.graphicsView_CA.item(n, m).setBackground(QColor(255, 100, 0, 255))
+                        self.ui.graphicsView_CA.item(n, m).setBackground(self.color)
         cellWidth = self.roundDivision(300, cols)
         cellHeight = self.roundDivision(300, rows)
         width = cellWidth * cols + 2
@@ -544,7 +566,8 @@ class MainWindow(QMainWindow):
             for j in range(cols):
                 self.ui.graphicsView_CA.item(i, j).setBackground(QColor(255, 255, 255, 255))
 
-        self.changeCellsColor(self.coloring_state[iter], 255, 100, 0)
+        # self.changeCellsColor(self.coloring_state[iter], 255, 100, 0)
+        self.changeCellsColor_QColor(self.coloring_state[iter], self.color)
         self.visualization_mode = 0
 
 

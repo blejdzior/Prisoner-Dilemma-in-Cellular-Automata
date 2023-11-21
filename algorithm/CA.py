@@ -760,13 +760,13 @@ class CA(QObject):
         cells[i, j].sum_payoff = 8 * cells[i, j].avg_payoff
 
     def calculate_payoff_1(self, cells, i, j):
-        # action is D
         m = 0
+        # action is D
         if cells[i, j].action == 0:
             # for loop over cell's neighbours
             for k in range(i - 1, i + 2):
                 for n in range(j - 1, j + 2):
-                    if k == i and j == n:
+                    if k == i and j == n or cells[k, n].id == 0:
                         continue
                     if cells[k, n].action == 1:
                         cells[i, j].payoffs[m] = self.payoff_D_C
@@ -779,7 +779,7 @@ class CA(QObject):
         elif cells[i, j].action == 1:
             for k in range(i - 1, i + 2):
                 for n in range(j - 1, j + 2):
-                    if k == i and j == n:
+                    if k == i and j == n or cells[k, n].id == 0:
                         continue
                     if cells[k, n].action == 1:
                         cells[i, j].payoffs[m] = self.payoff_C_C
@@ -788,8 +788,8 @@ class CA(QObject):
                         cells[i, j].payoffs[m] = self.payoff_C_D
                         cells[i, j].sum_payoff += self.payoff_C_D
                     m += 1
+        cells[i, j].avg_payoff = cells[i, j].sum_payoff / float(m)
         cells[i, j].sum_payoff = round(cells[i, j].sum_payoff, 4)
-        cells[i, j].avg_payoff = cells[i, j].sum_payoff / 8.0
         cells[i, j].avg_payoff = round(cells[i, j].avg_payoff, 4)
 
     def calculate_payoff_2(self, cells, i, j):
@@ -798,7 +798,7 @@ class CA(QObject):
             is_D = self.is_D_correct(cells, i, j)
             for k in range(i - 1, i + 2):
                 for n in range(j - 1, j + 2):
-                    if k == i and j == n:
+                    if k == i and j == n or cells[k, n].id == 0:
                         continue
                     if is_D:
                         cells[i, j].payoffs[m] = self.payoff_D_C
@@ -811,7 +811,7 @@ class CA(QObject):
             is_C = self.is_C_correct(cells, i, j)
             for k in range(i - 1, i + 2):
                 for n in range(j - 1, j + 2):
-                    if k == i and j == n:
+                    if k == i and j == n or cells[k, n].id == 0:
                         continue
                     if is_C:
                         cells[i, j].payoffs[m] = self.payoff_C_C
@@ -820,7 +820,7 @@ class CA(QObject):
                         cells[i, j].payoffs[m] = self.payoff_C_D
                         cells[i, j].sum_payoff += self.payoff_C_D
                     m += 1
-        cells[i, j].avg_payoff = cells[i, j].sum_payoff / 8
+        cells[i, j].avg_payoff = cells[i, j].sum_payoff / float(m)
         cells[i, j].sum_payoff = round(cells[i, j].sum_payoff, 4)
         cells[i, j].avg_payoff = round(cells[i, j].avg_payoff, 4)
 
