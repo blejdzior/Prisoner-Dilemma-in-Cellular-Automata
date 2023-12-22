@@ -79,7 +79,7 @@ class Ui_MainWindow(object):
 
         # LA group
         self.groupBox_LA = QGroupBox(self.centralwidget)
-        self.groupBox_LA.setGeometry(QRect(370, 100, 150, 80))
+        self.groupBox_LA.setGeometry(QRect(370, 100, 150, 100))
         self.groupBox_LA.setEnabled(False)
 
         # LA checkbox
@@ -102,7 +102,22 @@ class Ui_MainWindow(object):
         self.spinBox_epsilon.setMaximum(1)
         self.spinBox_epsilon.setDecimals(3)
         self.spinBox_epsilon.setSingleStep(0.005)
-        self.spinBox_epsilon.setValue(0.005)
+        self.spinBox_epsilon.setValue(0.05)
+
+        self.checkBox_min_payoff = QCheckBox(self.groupBox_LA)
+        self.checkBox_min_payoff.setGeometry(QRect(3, 70, 50, 20))
+        self.label_min_payoff = QLabel(self.groupBox_LA)
+        self.label_min_payoff.setGeometry(QRect(18, 70, 70, 20))
+        self.spinBox_min_payoff = QDoubleSpinBox(self.groupBox_LA)
+        self.spinBox_min_payoff.setGeometry(80, 70, 50, 20)
+        self.spinBox_min_payoff.setDecimals(2)
+        self.spinBox_min_payoff.setMinimum(0)
+        self.spinBox_min_payoff.setMaximum(10)
+        self.spinBox_min_payoff.setSingleStep(0.1)
+        self.spinBox_min_payoff.setEnabled(False)
+
+        self.checkBox_min_payoff.toggled.connect(self.spinBox_min_payoff.setEnabled)
+
 
 
 
@@ -566,6 +581,7 @@ class Ui_MainWindow(object):
         self.pushButton_start.setText(QCoreApplication.translate("MainWindow", u"START", None))
         self.label_memoryh.setText((QCoreApplication.translate("MainWindow", u"memory_h:", None)))
         self.label_epsilon.setText((QCoreApplication.translate("MainWindow", u"epsilon:", None)))
+        self.label_min_payoff.setText((QCoreApplication.translate("MainWindow", u"min_payoff:", None)))
     # retranslateUi
 
 

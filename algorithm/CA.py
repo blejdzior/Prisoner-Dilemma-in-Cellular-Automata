@@ -391,7 +391,7 @@ class CA(QObject):
                             if self.p_state_mut != 0:
                                 x = random.random()
                                 if x <= self.p_state_mut:
-                                    self.mutate_state(cells_temp[i, j])
+                                    self.mutate_state(cells_temp, i, j)
 
                     if self.is_test2:
                         self.print_test2(cells, cells_temp, change_strat_count, change_strat_count_final)
@@ -572,12 +572,18 @@ class CA(QObject):
                 self.f.write("{0:<2}".format(cells_temp[i, j].state))
             self.f.write("\n")
 
-    # mutation of cell state by negating current state
-    def mutate_state(self, cell):
-        if cell.state == 0:
-            cell.state = 1
-        else:
-            cell.state = 0
+    # mutation of cell state by randomly choosing active neighbour and setting its state
+    def mutate_state(self, cells, i, j):
+        # if self.is_group_of_1s(cells, i, j) or self.is_group_of_1s(cells, i, j):
+        #     return
+        cell_y = None
+        cell_x = None
+        while True:
+            cell_y = random.randint(i - 1, i + 1)
+            cell_x = random.randint(j - 1, j + 1)
+            if cells[cell_y, cell_x].id != 0 and (cell_x != j or cell_x != i):
+                break
+        cells[i, j].state = cells[cell_y, cell_x].state
 
     # mutation of strategy - for now simple random choice
     def mutate_strat(self, cell):
