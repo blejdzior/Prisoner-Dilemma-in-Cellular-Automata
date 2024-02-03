@@ -957,7 +957,7 @@ class MainWindow(QMainWindow):
                 avg_payoff = statistics.av_sum
                 break
 
-        self.gnuplot.updateCanvas(f_C, f_C_corr, avg_payoff[1], f_strat_ch, f_strat_ch_final)
+        self.gnuplot.updateCanvas(f_C, f_C_corr, avg_payoff, f_strat_ch, f_strat_ch_final)
 
         # method to update graph while automata is still calculating
     def update_graph_async(self, f_C, f_C_corr, avg_payoff, f_strat_ch, f_strat_ch_final):

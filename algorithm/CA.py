@@ -6,6 +6,7 @@ Created on Sat Apr 22 12:29:46 2023
 """
 import random
 import numpy as np
+from collections import Counter
 from algorithm.Cell import Cell
 from algorithm.Statistics import Statistics
 import sys
@@ -377,43 +378,53 @@ class CA(QObject):
                                 if x <= self.p_strat_mut:
                                     self.mutate_strat(cells_temp[i, j])
 
-                    # update cell states depending on strategy
-                    for i in range(1, self.M_rows - 1):
-                        for j in range(1, self.N_cols - 1):
-
-                            self.update_cell_states(cells, cells_temp, i, j)
-
-                            # resetting group_of_1s and 0s to avoid false state changes in next step
-                            cells_temp[i, j].group_of_1s = False
-                            cells_temp[i, j].group_of_0s = False
-
-                            # cell state mutation with p_state_mut probability
-                            if self.p_state_mut != 0:
-                                x = random.random()
-                                if x <= self.p_state_mut:
-                                    self.mutate_state(cells_temp, i, j)
 
                     if self.is_test2:
                         self.print_test2(cells, cells_temp, change_strat_count, change_strat_count_final)
 
+                    # update cell states depending on strategy
                     for i in range(1, self.M_rows - 1):
                         for j in range(1, self.N_cols - 1):
-                            cells_temp[i, j].group_of_1s = self.is_group_of_1s(cells_temp, i, j)
-                            if not cells_temp[i, j].group_of_1s:
-                                cells_temp[i, j].group_of_0s = self.is_group_of_0s(cells_temp, i, j)
-                    # mutation when cell is in group od 1s or group of 0s
+                            self.update_cell_states(cells, cells_temp, i, j)
+                            # cells_temp[i, j].group_of_1s = self.is_group_of_1s(cells_temp, i, j)
+                            # if not cells_temp[i, j].group_of_1s:
+                            #     cells_temp[i, j].group_of_0s = self.is_group_of_0s(cells_temp, i, j)
+
+                    # decide if cell is in a group of 0s
                     for i in range(1, self.M_rows - 1):
                         for j in range(1, self.N_cols - 1):
-                            if cells_temp[i, j].group_of_0s:
-                                if self.p_neigh_0_mut != 0:
+                            cells_temp[i, j].group_of_0s = self.is_group_of_0s(cells_temp, i, j)
+
+                    # mutation of group of 0s
+                    if self.p_neigh_0_mut != 0:
+                        for i in range(1, self.M_rows - 1):
+                            for j in range(1, self.N_cols - 1):
+                                if cells_temp[i, j].group_of_0s:
                                     x = random.random()
                                     if x <= self.p_neigh_0_mut:
                                         cells_temp[i, j].state = 1
-                            elif cells_temp[i, j].group_of_1s:
-                                if self.p_neigh_1_mut != 0:
+
+                    # decide if cell is in a group of 1s
+                    for i in range(1, self.M_rows - 1):
+                        for j in range(1, self.N_cols - 1):
+                            cells_temp[i, j].group_of_1s = self.is_group_of_1s(cells_temp, i, j)
+
+                    # mutation of group of 1s
+                    if self.p_neigh_1_mut != 0:
+                        for i in range(1, self.M_rows - 1):
+                            for j in range(1, self.N_cols - 1):
+                                if cells_temp[i, j].group_of_1s:
                                     x = random.random()
                                     if x <= self.p_neigh_1_mut:
                                         cells_temp[i, j].state = 0
+
+                        # cell state mutation with p_state_mut probability
+                        if self.p_state_mut != 0:
+                            for j in range(1, self.N_cols - 1):
+                                for i in range(1, self.M_rows - 1):
+                                    x = random.random()
+                                    if x <= self.p_state_mut:
+                                        self.mutate_state(cells_temp, i, j)
 
                 # checks if exceeds max num of iterations
                 if k >= self.num_of_iter - 1:
@@ -572,10 +583,23 @@ class CA(QObject):
                 self.f.write("{0:<2}".format(cells_temp[i, j].state))
             self.f.write("\n")
 
+    # checks if cells has correct state in neighbourhood, if so then mutation isn't allowed.
+    def is_state_mut_allowed(self, cells, i, j):
+        if cells[i, j].state == 0:
+            if self.is_D_correct(cells, i, j):
+                return False
+            else:
+                return True
+        else:
+            if self.is_C_correct(cells, i, j):
+                return False
+            else:
+                return True
+
     # mutation of cell state by randomly choosing active neighbour and setting its state
     def mutate_state(self, cells, i, j):
-        # if self.is_group_of_1s(cells, i, j) or self.is_group_of_1s(cells, i, j):
-        #     return
+        if not self.is_state_mut_allowed(cells, i, j):
+            return
         cell_y = None
         cell_x = None
         while True:
@@ -663,32 +687,41 @@ class CA(QObject):
                                                                          cells[i, j - 1].sum_payoff,
                                                                          cells[i - 1, j - 1].sum_payoff))
 
-        if max_payoff[2] < cells[i - 1, j].sum_payoff:
-            max_payoff = (i - 1, j, cells[i - 1, j].sum_payoff)
-        if max_payoff[2] < cells[i - 1, j + 1].sum_payoff:
-            max_payoff = (i - 1, j + 1, cells[i - 1, j + 1].sum_payoff)
+        # finding maximum payoff
+        for k in range(i - 1, i + 2):
+            for n in range(j - 1, j + 2):
+                if k == i and j == n:
+                    continue
+                if max_payoff[2] < cells[k, n].sum_payoff:
+                    max_payoff = (k, n, cells[k, n].sum_payoff)
 
-        if max_payoff[2] < cells[i, j + 1].sum_payoff:
-            max_payoff = (i, j + 1, cells[i, j + 1].sum_payoff)
+        # selecting all cells with payoff equal to max
+        winners_strat = []
+        winners_ids = []
+        for k in range(i - 1, i + 2):
+            for n in range(j - 1, j + 2):
+                if max_payoff[2] == cells[k, n].sum_payoff:
+                    winners_strat.append((cells[k, n].strategy, cells[k, n].k))
+                    winners_ids.append((cells[k, n].id, cells[k, n].strategy, cells[k, n].k))
 
-        if max_payoff[2] < cells[i + 1, j + 1].sum_payoff:
-            max_payoff = (i + 1, j + 1, cells[i + 1, j + 1].sum_payoff)
-        if max_payoff[2] < cells[i + 1, j].sum_payoff:
-            max_payoff = (i + 1, j, cells[i + 1, j].sum_payoff)
-        if max_payoff[2] < cells[i + 1, j - 1].sum_payoff:
-            max_payoff = (i + 1, j - 1, cells[i + 1, j - 1].sum_payoff)
+        # selecting winner strategy with most occurrences
+        count = Counter(winners_strat)
+        winner = count.most_common(1)[0][0]
 
-        if max_payoff[2] < cells[i, j - 1].sum_payoff:
-            max_payoff = (i, j - 1, cells[i, j - 1].sum_payoff)
-        if max_payoff[2] < cells[i - 1, j - 1].sum_payoff:
-            max_payoff = (i - 1, j - 1, cells[i - 1, j - 1].sum_payoff)
-        k, n, payoff = max_payoff
-        cells[i, j].winner_agent = cells[k, n].id
-        if k != i or n != j:
-            cells_temp[i, j].strategy = cells[k, n].strategy
-            cells_temp[i, j].k = cells[k, n].k
+        # choosing one of winner cells
+        for id, strat, k in winners_ids:
+            if strat == winner[0] and k == winner[1]:
+                cells[i, j].winner_agent = id
+                cells_temp[i, j].strategy = strat
+                cells_temp[i, j].k = k
+                if cells[i, j].id == cells[i, j].winner_agent:
+                    break
+
+        # check if strategy changed during competition
+        if cells[i, j].id != cells[i, j].winner_agent:
             return True
         return False
+
 
     # roulette competition - neighbour with the highest payoff has the highest probability to win
     def roulette_competition(self, cells, cells_temp, i, j):

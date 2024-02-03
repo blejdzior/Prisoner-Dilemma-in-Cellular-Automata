@@ -60,12 +60,6 @@ class LA(CA):
             sum_payoff_temp = 0
 
             cells_temp = copy.deepcopy(cells)
-            # update cell states according to strategy:
-            for i in range(1, self.M_rows - 1):
-                for j in range(1, self.N_cols - 1):
-                    # decide whether cell will be changing strategy in this iteration with synch_prob probability
-                    self.is_cell_changing_strategy(cells_temp[i, j])
-                    self.update_cell_states(cells, cells_temp, i, j)
 
             # decide action
             if self.is_payoff_1:
@@ -82,6 +76,11 @@ class LA(CA):
                         self.calculate_payoff_2(cells_temp, i, j)
                     # cells[i, j].avg_payoff /= u_
                     sum_payoff_temp += cells_temp[i, j].avg_payoff
+
+                    # check if cells is in group_of_1s or 0s
+                    cells_temp[i, j].group_of_1s = self.is_group_of_1s(cells_temp, i, j)
+                    if not cells_temp[i, j].group_of_1s:
+                        cells_temp[i, j].group_of_0s = self.is_group_of_0s(cells_temp, i, j)
 
             # redistribute payoffs
             if self.is_sharing:
@@ -127,28 +126,46 @@ class LA(CA):
                         if x <= self.p_strat_mut:
                             self.mutate_strat(cells_temp[i, j])
 
-                    # mutate state
-                    if self.p_state_mut != 0:
-                        x = random.random()
-                        if x <= self.p_state_mut:
-                            self.mutate_state(cells_temp, i, j)
+            # update cell states depending on strategy
+            for i in range(1, self.M_rows - 1):
+                for j in range(1, self.N_cols - 1):
+                    self.update_cell_states(cells, cells_temp, i, j)
 
-                    # decide if in group of 1s or 0s
-                    cells_temp[i, j].group_of_1s = self.is_group_of_1s(cells_temp, i, j)
-                    if not cells_temp[i, j].group_of_1s:
-                        cells_temp[i, j].group_of_0s = self.is_group_of_0s(cells_temp, i, j)
+            # decide if cell is in a group of 0s
+            for i in range(1, self.M_rows - 1):
+                for j in range(1, self.N_cols - 1):
+                    cells_temp[i, j].group_of_0s = self.is_group_of_0s(cells_temp, i, j)
 
-                    # mutation when in group of 1s or 0s
-                    if cells_temp[i, j].group_of_0s:
-                        if self.p_neigh_0_mut != 0:
+            # mutation of group of 0s
+            if self.p_neigh_0_mut != 0:
+                for i in range(1, self.M_rows - 1):
+                    for j in range(1, self.N_cols - 1):
+                        if cells_temp[i, j].group_of_0s:
                             x = random.random()
                             if x <= self.p_neigh_0_mut:
                                 cells_temp[i, j].state = 1
-                    elif cells_temp[i, j].group_of_1s:
-                        if self.p_neigh_1_mut != 0:
+
+            # decide if cell is in a group of 1s
+            for i in range(1, self.M_rows - 1):
+                for j in range(1, self.N_cols - 1):
+                    cells_temp[i, j].group_of_1s = self.is_group_of_1s(cells_temp, i, j)
+
+            # mutation of group of 1s
+            if self.p_neigh_1_mut != 0:
+                for i in range(1, self.M_rows - 1):
+                    for j in range(1, self.N_cols - 1):
+                        if cells_temp[i, j].group_of_1s:
                             x = random.random()
                             if x <= self.p_neigh_1_mut:
                                 cells_temp[i, j].state = 0
+
+            # cell state mutation with p_state_mut probability
+            if self.p_state_mut != 0:
+                for j in range(1, self.N_cols - 1):
+                    for i in range(1, self.M_rows - 1):
+                        x = random.random()
+                        if x <= self.p_state_mut:
+                            self.mutate_state(cells_temp, i, j)
 
             self.misc_stats.append((k + 1, change_strat_count, change_strat_count_final))
             self.cells.append((k + 1, cells_temp))
@@ -172,9 +189,12 @@ class LA(CA):
         self.init_cells_memory()
         self.init_cells(self.cells[0][1], self.p_init_C)
         cells = self.cells[0][1]
+        cells_temp = copy.deepcopy(cells)
         for i in range(1, self.M_rows - 1):
             for j in range(1, self.N_cols - 1):
                 self.select_strategy(cells[i, j])
+                self.is_cell_changing_strategy(cells[i, j])
+                self.update_cell_states(cells_temp, cells, i, j)
 
 
     def init_cells_memory(self):
