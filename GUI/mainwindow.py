@@ -28,6 +28,7 @@ from DATA.strategies import Strategies
 from DATA.synch import Synch
 from DATA.payoff import Payoff
 
+from algorithm.Nash import Nash
 from algorithm.CA import CA
 from algorithm.LA import LA
 from GUI.animation import Animation
@@ -82,6 +83,15 @@ class MainWindow(QMainWindow):
 
 
         # self.animation.signal.connect(self.update_graph)
+
+
+    def start_nash(self):
+        self.nash = Nash(self.ui.spinBox_rows.value(), self.ui.spinBox_cols.value(),
+                         self.ui.radioButton_check_sol.isChecked(), self.ui.spinBox_plus, self.ui.spinBox_minus,
+                         self.ui.doubleSpinBox_a.value(), self.ui.doubleSpinBox_b.value(), self.ui.doubleSpinBox_c.value(),
+                         self.ui.doubleSpinBox_d.value(), self.ui.radiobutton_pay_fun_1.isChecked())
+        self.nash.check_all_solutions()
+
 
     def resetIterations(self):
         print("Reset iteracji")
