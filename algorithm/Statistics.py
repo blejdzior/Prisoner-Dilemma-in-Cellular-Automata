@@ -3,7 +3,7 @@ class Statistics:
                  f_kDC, f_strat_ch, f_0D, f_1D, f_2D, f_3D, f_4D, f_5D, f_6D,
                  f_7D, f_8D, f_0C, f_1C, f_2C, f_3C, f_4C, f_5C, f_6C, f_7C, f_8C,
                  f_0DC, f_1DC, f_2DC, f_3DC, f_4DC, f_5DC, f_6DC, f_7DC, f_8DC, f_strat_change_final, f_cr_0s, f_cr_1s,
-                 optimal_solut):
+                 optimal_solut, max_f_C_corr=None):
         self.iter = iter
         self.f_C = f_C
         self.f_C_corr = f_C_corr
@@ -46,6 +46,9 @@ class Statistics:
         self.f_cr_0s = f_cr_0s
         self.f_cr_1s = f_cr_1s
         self.optimal_solut = optimal_solut
+        self.max_f_C_corr = max_f_C_corr
+
+
 
     def get_iter(self):
         return self.iter
