@@ -45,7 +45,7 @@ import os
 from pathlib import Path
 from concurrent.futures.process import ProcessPoolExecutor
 
-from memory_profiler import profile
+# from memory_profiler import profile
 
 
 class MainWindow(QMainWindow):

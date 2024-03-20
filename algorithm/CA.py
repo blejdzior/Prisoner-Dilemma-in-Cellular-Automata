@@ -831,6 +831,8 @@ class CA(QObject):
         cells[i, j].sum_payoff = round(cells[i, j].sum_payoff, 4)
         cells[i, j].avg_payoff = round(cells[i, j].avg_payoff, 4)
 
+
+    # if cell is in correct position then
     def calculate_payoff_2(self, cells, i, j):
         m = 0
         if cells[i, j].state == 0:
