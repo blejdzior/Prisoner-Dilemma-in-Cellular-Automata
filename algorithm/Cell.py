@@ -4,10 +4,10 @@ Created on Sat Apr 22 12:30:18 2023
 
 @author: pozdro
 """
-from PySide6.QtWidgets import QTableWidgetItem
+# from PySide6.QtWidgets import QTableWidgetItem
 import numpy as np
-
-class Cell(QTableWidgetItem):
+from queue import Queue
+class Cell():
     def __init__(self, _id, x, y, strategy = -1, k = -1, action = -1, state = -1, group_of_1s = False, group_of_0s = False, change_strategy = False):
         super().__init__()
         super().__init_subclass__()
@@ -45,6 +45,8 @@ class Cell(QTableWidgetItem):
         self.sum_payoff = 0
         self.avg_payoff = 0
 
+        self.memory = []
+
 
 
     def __deepcopy__(self, memodict={}):
@@ -52,6 +54,7 @@ class Cell(QTableWidgetItem):
                     self.change_strategy)
         cell.avg_payoff = self.avg_payoff
         cell.sum_payoff = self.sum_payoff
+        cell.memory = self.memory
         return cell
 
     def __init_subclass__(cls) -> None:
