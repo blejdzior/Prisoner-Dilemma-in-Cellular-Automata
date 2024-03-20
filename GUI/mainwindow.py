@@ -549,7 +549,7 @@ class MainWindow(QMainWindow):
 
         self.seed = Seed(self.ui.radioButton_clock.isChecked(),
                             self.ui.radioButton_custom.isChecked(),
-                            self.ui.spinBox_custom_seed.value())
+                            int(self.ui.spinBox_custom_seed.text()))
 
         self.synch = Synch(self.ui.doubleSpinBox_synch_prob.value(),
                             self.ui.spinBox_optimal_num_1s.value(), self.ui.spinBox_u.value(),
