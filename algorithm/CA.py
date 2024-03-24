@@ -15,7 +15,7 @@ import os
 import time
 from PySide6.QtCore import Signal, QObject
 
-
+# class used in multiprocess mode
 class CA(QObject):
     signal = Signal(float, float, float, float, float)
     signal_finished = Signal()
@@ -422,6 +422,8 @@ class CA(QObject):
                         if self.p_state_mut != 0:
                             for j in range(1, self.N_cols - 1):
                                 for i in range(1, self.M_rows - 1):
+                                    if not self.is_state_mut_allowed(cells, i, j):
+                                        continue
                                     x = random.random()
                                     if x <= self.p_state_mut:
                                         self.mutate_state(cells_temp, i, j)
@@ -598,8 +600,8 @@ class CA(QObject):
 
     # mutation of cell state by randomly choosing active neighbour and setting its state
     def mutate_state(self, cells, i, j):
-        if not self.is_state_mut_allowed(cells, i, j):
-            return
+        # if not self.is_state_mut_allowed(cells, i, j):
+        #     return
         cell_y = None
         cell_x = None
         while True:
@@ -607,7 +609,9 @@ class CA(QObject):
             cell_x = random.randint(j - 1, j + 1)
             if cells[cell_y, cell_x].id != 0 and (cell_x != j or cell_x != i):
                 break
+        state_temp = cells[i, j].state
         cells[i, j].state = cells[cell_y, cell_x].state
+        cells[cell_y, cell_x].state = state_temp
 
     # mutation of strategy - for now simple random choice
     def mutate_strat(self, cell):

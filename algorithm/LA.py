@@ -163,6 +163,8 @@ class LA(CA):
             if self.p_state_mut != 0:
                 for j in range(1, self.N_cols - 1):
                     for i in range(1, self.M_rows - 1):
+                        if not self.is_state_mut_allowed(cells, i, j):
+                            continue
                         x = random.random()
                         if x <= self.p_state_mut:
                             self.mutate_state(cells_temp, i, j)

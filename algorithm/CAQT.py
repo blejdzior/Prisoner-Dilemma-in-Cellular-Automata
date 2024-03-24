@@ -3,6 +3,9 @@
 Created on Sat Apr 22 12:29:46 2023
 
 @author: pozdro
+
+
+!!!!!!!!!NOT USED!!!!!!!!!!
 """
 import random
 import numpy as np
@@ -453,6 +456,7 @@ class CAQT(QObject):
 
                             # cell state mutation with p_state_mut probability
                             if self.p_state_mut != 0:
+
                                 x = random.random()
                                 if x <= self.p_state_mut:
                                     self.mutate_state(cells_temp[i, j])
