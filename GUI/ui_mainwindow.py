@@ -8,11 +8,15 @@
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
 
-from PySide6.QtCore import (QCoreApplication, QMetaObject, QRect)
+from PySide6.QtCore import (QCoreApplication, QMetaObject, QRect, QRegularExpression)
 from PySide6.QtWidgets import (QButtonGroup, QCheckBox, QDoubleSpinBox,
     QFrame, QGraphicsView, QTableWidget, QGroupBox, QLCDNumber,
     QLabel, QMenuBar, QPushButton, QRadioButton, QSpinBox, QStatusBar,
-    QWidget, QAbstractItemView, QLineEdit)
+    QWidget, QAbstractItemView, QTabWidget, QVBoxLayout, QLineEdit)
+from PySide6.QtGui import (QRegularExpressionValidator)
+import sys
+
+
 
 class Ui_MainWindow(object):
 
@@ -246,12 +250,13 @@ class Ui_MainWindow(object):
         self.radioButton_clock = QRadioButton(self.groupBox_seed)
         self.radioButton_clock.setObjectName(u"radioButton_clock")
         self.radioButton_clock.setGeometry(QRect(10, 10, 82, 22))
-        self.radioButton_clock.setChecked(True)
-        # self.spinBox_custom_seed = QSpinBox(self.groupBox_seed)
         self.spinBox_custom_seed = QLineEdit(self.groupBox_seed)
+        self.spinBox_custom_seed.setValidator(QRegularExpressionValidator("[0-9]*", self.groupBox_seed))
         self.spinBox_custom_seed.setObjectName(u"spinBox_custom_seed")
         self.spinBox_custom_seed.setEnabled(False)
         self.spinBox_custom_seed.setGeometry(QRect(10, 50, 89, 25))
+        # self.spinBox_custom_seed.setMaximum(sys.maxsize)
+
         self.radioButton_custom = QRadioButton(self.groupBox_seed)
         self.radioButton_custom.setObjectName(u"radioButton_custom")
         self.radioButton_custom.setGeometry(QRect(10, 30, 94, 22))

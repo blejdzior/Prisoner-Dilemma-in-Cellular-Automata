@@ -45,8 +45,8 @@ class Nash(CA):
 
     def save_results(self, solutions, sum):
 
-        f = open("RESULTS//nash_solutions", "w")
-        f2 = open("RESULTS//nash_payoffs", "w")
+        f = open("RESULTS//nash_solutions.txt", "w")
+        f2 = open("RESULTS//nash_payoffs.txt", "w")
         self.save_parameters(f)
         self.save_parameters(f2)
         for i in range(len(solutions)):
@@ -57,7 +57,7 @@ class Nash(CA):
         f2.write("{0:<7}: {1:<10}\n".format("max_val", "(" + str(index_max) + ", " + str(max(sum)) + ")"))
         for i in range(len(sum)):
             f2.write("{0:<10} {1:<10}\n".format(str(i) + ":", sum[i]))
-
+        print("FINISHED")
 
     def save_parameters(self, f):
         f.write("# {0:4}: {1:<10}\n# {2:4}: {3:<10}\n".format("rows", self.rows - 2, "cols", self.cols - 2))

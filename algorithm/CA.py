@@ -4,7 +4,8 @@ Created on Sat Apr 22 12:29:46 2023
 
 @author: pozdro
 """
-import random
+import random, tracemalloc
+from numba import njit
 import numpy as np
 from collections import Counter
 from algorithm.Cell import Cell
@@ -15,7 +16,7 @@ import os
 import time
 from PySide6.QtCore import Signal, QObject
 
-
+# class used in multiprocess mode
 class CA(QObject):
     signal = Signal(float, float, float, float, float)
     signal_finished = Signal()
@@ -94,6 +95,7 @@ class CA(QObject):
                 self.cells = [(0, self.create_CA(self.p_init_C, self.allC, self.allD, self.kD, self.kC, self.minK, self.maxK))]
             else:
                 self.cells = [(0, self.create_CA_debug())]
+
 
     # overrides __getstate__ method for pickling CA object in multiprocess mode
     # signals from Qt cannot be pickled, and as they're not used in multirun mode they can be set to None in dictionary
@@ -253,6 +255,7 @@ class CA(QObject):
         return CA_cells
 
     # initially cell states are assigned randomly with p_init_C probability.
+    @njit
     def init_cell_state(self, p_init_C):
         x = random.random()
         if x <= p_init_C:
@@ -291,10 +294,13 @@ class CA(QObject):
 
 
     def evolution(self):
+        # tracemalloc.start()
         if self.is_multi_run:
             print("process started PID: %d" % os.getpid())
         else:
             print("thread started")
+
+        cells_temp = copy.deepcopy(self.cells[0][1])
 
         for k in range(0, self.num_of_iter, self.u):
 
@@ -302,6 +308,7 @@ class CA(QObject):
             for i in range(1, self.M_rows - 1):
                 for j in range(1, self.N_cols - 1):
                     cells[i, j].sum_payoff = 0
+
 
             change_strat_count = 0
             change_strat_count_final = 0
@@ -349,7 +356,12 @@ class CA(QObject):
                 if self.is_test1 and self.is_sharing:
                     self.print_test1_2(k, cells, sum_payoff_temp)
 
-                cells_temp = copy.deepcopy(cells)
+                # cells_temp = copy.deepcopy(cells)
+                for i in range(1, self.M_rows - 1):
+                    for j in range(1, self.N_cols - 1):
+                        cells[i, j].copy(cells_temp[i, j])
+
+
                 self.avg_payoff.append((k, sum_payoff_temp / ((self.M_rows - 2) * (self.N_cols - 2))))
 
                 if k < self.num_of_iter - 1:
@@ -422,6 +434,8 @@ class CA(QObject):
                         if self.p_state_mut != 0:
                             for j in range(1, self.N_cols - 1):
                                 for i in range(1, self.M_rows - 1):
+                                    if not self.is_state_mut_allowed(cells, i, j):
+                                        continue
                                     x = random.random()
                                     if x <= self.p_state_mut:
                                         self.mutate_state(cells_temp, i, j)
@@ -445,11 +459,21 @@ class CA(QObject):
         if not self.is_multi_run:
             self.calculate_stats_for_graph(k)
         self.statistics = self.calculate_statistics()
+
+
         if self.is_multi_run:
             print("process finished PID: %d" % os.getpid())
         else:
             print("thread finished")
             self.signal_finished.emit()
+            
+
+        # snapshot = tracemalloc.take_snapshot()
+        # top_stats = snapshot.statistics('lineno')
+        #
+        # print("[ Top 10 ]")
+        # for stat in top_stats[:10]:
+        #     print(stat)
 
     def print_test1_1(self, k, cells, sum_payoff_temp):
         self.f.write("\niter = " + str(k))
@@ -598,8 +622,8 @@ class CA(QObject):
 
     # mutation of cell state by randomly choosing active neighbour and setting its state
     def mutate_state(self, cells, i, j):
-        if not self.is_state_mut_allowed(cells, i, j):
-            return
+        # if not self.is_state_mut_allowed(cells, i, j):
+        #     return
         cell_y = None
         cell_x = None
         while True:
@@ -607,7 +631,9 @@ class CA(QObject):
             cell_x = random.randint(j - 1, j + 1)
             if cells[cell_y, cell_x].id != 0 and (cell_x != j or cell_x != i):
                 break
+        state_temp = cells[i, j].state
         cells[i, j].state = cells[cell_y, cell_x].state
+        cells[cell_y, cell_x].state = state_temp
 
     # mutation of strategy - for now simple random choice
     def mutate_strat(self, cell):

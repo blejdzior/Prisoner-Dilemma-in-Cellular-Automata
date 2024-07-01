@@ -9,6 +9,7 @@ import math
 import time
 import asyncio
 import timeit
+import tracemalloc
 
 from PySide6.QtWidgets import (QMainWindow, QTableWidgetItem, QMessageBox, QGraphicsScene)
 from PySide6.QtGui import (QColor, QPixmap)
@@ -32,7 +33,6 @@ from algorithm.Nash import Nash
 from algorithm.CA import CA
 from algorithm.LA import LA
 from GUI.animation import Animation
-from algorithm.CAQT import CAQT
 
 from GUI.gnuplot import GnuplotCanvas
 from matplotlib.figure import Figure
@@ -547,9 +547,16 @@ class MainWindow(QMainWindow):
                                     self.ui.doubleSpinBox_p_0_neigh_mut.value(),
                                     self.ui.doubleSpinBox_p_1_neigh_mut.value())
 
+        # projecting custom_seed LineEdit value to int
+        custom_seed = self.ui.spinBox_custom_seed.text()
+        if custom_seed == '':
+            custom_seed = 0
+        else:
+            custom_seed = int(custom_seed)
+
         self.seed = Seed(self.ui.radioButton_clock.isChecked(),
                             self.ui.radioButton_custom.isChecked(),
-                            self.ui.spinBox_custom_seed.value())
+                            custom_seed)
 
         self.synch = Synch(self.ui.doubleSpinBox_synch_prob.value(),
                             self.ui.spinBox_optimal_num_1s.value(), self.ui.spinBox_u.value(),
@@ -981,6 +988,9 @@ class MainWindow(QMainWindow):
         self.calculate_exec_time()
         msg.setWindowTitle("Done!")
         msg.exec_()
+
+
+
 
 
 

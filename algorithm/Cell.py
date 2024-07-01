@@ -47,6 +47,27 @@ class Cell():
 
         self.memory = []
 
+    def copy(self, copy_to):
+        # dict = [a for a in dir(self) if not a.startswith('__') ]
+        # for attribute in dict:
+        #     setattr(copy_to, attribute, getattr(self, attribute))
+        copy_to.strategy = self.strategy
+        copy_to.state = self.state
+        copy_to.k = self.k
+        copy_to.action = self.action
+        copy_to.x = self.x
+        copy_to.y = self.y
+        copy_to.id = self.id
+        copy_to.group_of_1s = self.group_of_1s
+        copy_to.group_of_0s = self.group_of_0s
+        copy_to.change_strategy = self.change_strategy
+        copy_to.pay_to_send = self.pay_to_send
+        copy_to.pay_to_receive = self.pay_to_receive
+        copy_to.winner_agent = self.winner_agent
+        copy_to.payoffs = self.payoffs.copy()
+        copy_to.sum_payoff = self.sum_payoff
+        copy_to.avg_payoff = self.avg_payoff
+        copy_to.memory = self.memory.copy()
 
 
     def __deepcopy__(self, memodict={}):
