@@ -9,6 +9,7 @@ import math
 import time
 import asyncio
 import timeit
+import tracemalloc
 
 from PySide6.QtWidgets import (QMainWindow, QTableWidgetItem, QMessageBox, QGraphicsScene)
 from PySide6.QtGui import (QColor, QPixmap)
@@ -987,6 +988,9 @@ class MainWindow(QMainWindow):
         self.calculate_exec_time()
         msg.setWindowTitle("Done!")
         msg.exec_()
+
+
+
 
 
 

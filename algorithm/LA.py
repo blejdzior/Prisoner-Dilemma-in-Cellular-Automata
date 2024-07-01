@@ -48,6 +48,8 @@ class LA(CA):
         else:
             print("thread started")
 
+        cells_temp = copy.deepcopy(self.cells[0][1])
+
         for k in range(self.num_of_iter):
             _, cells = self.cells[k]
             for i in range(1, self.M_rows - 1):
@@ -59,7 +61,11 @@ class LA(CA):
 
             sum_payoff_temp = 0
 
-            cells_temp = copy.deepcopy(cells)
+
+            # copy values of cells to temp
+            for i in range(1, self.M_rows - 1):
+                for j in range(1, self.N_cols - 1):
+                    cells[i, j].copy(cells_temp[i, j])
 
             # decide action
             if self.is_payoff_1:

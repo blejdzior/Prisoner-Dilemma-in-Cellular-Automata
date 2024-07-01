@@ -1,6 +1,7 @@
 # This Python file uses the following encoding: utf-8
 
 import sys
+import tracemalloc
 
 from PySide6.QtWidgets import QApplication
 
